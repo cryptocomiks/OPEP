@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🛢️ EAU quitte l'OPEP — CryptoComiks Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Barlow:ital,wght@0,300;0,400;0,600;0,700;0,800;1,300;1,600&family=Barlow+Condensed:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --void:      #05080D;
+  --deep:      #07111F;
+  --surface:   #0B1929;
+  --panel:     #0D1E2F;
+  --panel2:    #0F2236;
+  --border:    rgba(62,214,208,0.1);
+  --border-md: rgba(62,214,208,0.2);
+  --cyan:      #3ED6D0;
+  --cyan-dim:  rgba(62,214,208,0.35);
+  --white:     #EAF4FF;
+  --steel:     #7D8CA3;
+  --steel-dim: #4A5568;
+  --red:       #FF4D4D;
+  --red-dim:   rgba(255,77,77,0.15);
+  --gold:      #E8C97A;
+  --gold-dim:  rgba(232,201,122,0.12);
+  --green:     #4ADE80;
+  --green-dim: rgba(74,222,128,0.12);
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'Barlow', sans-serif;
+  --cond: 'Barlow Condensed', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--void);
+  color: var(--white);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: var(--void); }
+::-webkit-scrollbar-thumb { background: var(--cyan-dim); }
+
+/* ═══ TOPBAR ═══ */
+.topbar {
+position: fixed; top:0; left:0; right:0; z-index:999;
+background: rgba(5,8,13,0.94);
+backdrop-filter: blur(12px);
+border-bottom: 1px solid var(–border);
+height: 42px;
+display: flex; align-items: center; justify-content: space-between;
+padding: 0 1.5rem;
+transition: transform 0.3s;
+}
+.tb-left { display:flex; align-items:center; gap:1.5rem; }
+.tb-brand { font-family:var(–mono); font-size:0.6rem; font-weight:600; letter-spacing:0.25em; color:var(–cyan); }
+.tb-alert { display:flex; align-items:center; gap:0.35rem; font-family:var(–mono); font-size:0.52rem; letter-spacing:0.1em; }
+.dot { width:5px;height:5px;border-radius:50%; }
+.dot-red { background:var(–red); animation:pr 1.4s infinite; }
+.dot-grn { background:var(–green); animation:pg 1.4s infinite; }
+@keyframes pr { 0%,100%{box-shadow:0 0 4px var(–red);} 50%{box-shadow:none;} }
+@keyframes pg { 0%,100%{box-shadow:0 0 4px var(–green);} 50%{opacity:0.5;} }
+.tb-right { display:flex; gap:1.2rem; font-family:var(–mono); font-size:0.55rem; color:var(–steel); }
+.tb-price { color:var(–cyan); font-weight:600; }
+.tb-price.alert { color:var(–red); }
+
+/* ═══ HERO ═══ */
+.hero {
+min-height: 100vh;
+padding-top: 42px;
+display: flex; flex-direction: column; align-items: center; justify-content: center;
+position: relative; overflow: hidden;
+background: radial-gradient(ellipse 100% 80% at 50% 0%, rgba(62,214,208,0.05) 0%, transparent 60%),
+radial-gradient(ellipse 60% 50% at 20% 80%, rgba(255,77,77,0.04) 0%, transparent 50%),
+var(–void);
+}
+.hero-grid {
+position: absolute; inset: 0;
+background-image:
+linear-gradient(rgba(62,214,208,0.035) 1px, transparent 1px),
+linear-gradient(90deg, rgba(62,214,208,0.035) 1px, transparent 1px);
+background-size: 50px 50px;
+mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 20%, transparent 75%);
+}
+.hero-content { position:relative; z-index:5; text-align:center; padding:2rem; max-width:860px; }
+.h-classify {
+font-family:var(–mono); font-size:0.58rem; letter-spacing:0.4em; color:var(–red);
+margin-bottom:1.2rem; display:flex; align-items:center; justify-content:center; gap:1rem;
+opacity:0; animation: fuD 0.7s 0.2s forwards;
+}
+.h-classify::before,.h-classify::after { content:’’; width:60px; height:1px; background:rgba(255,77,77,0.4); }
+.h-date { font-family:var(–mono); font-size:0.6rem; color:var(–steel); letter-spacing:0.2em; margin-bottom:1rem; opacity:0; animation:fuD 0.7s 0.35s forwards; }
+.h-title { font-family:var(–cond); font-size:clamp(3.5rem,9vw,8rem); font-weight:800; line-height:0.9; text-transform:uppercase; letter-spacing:-0.02em; margin-bottom:0.8rem; opacity:0; animation:fuD 0.8s 0.5s forwards; }
+.h-title .c { color:var(–cyan); }
+.h-title .r { color:var(–red); }
+.h-sub { font-family:var(–cond); font-size:clamp(0.9rem,2vw,1.4rem); font-weight:300; letter-spacing:0.2em; text-transform:uppercase; color:var(–steel); margin-bottom:2.5rem; opacity:0; animation:fuD 0.7s 0.65s forwards; }
+.h-kpis { display:flex; justify-content:center; flex-wrap:wrap; gap:2.5rem; opacity:0; animation:fuD 0.7s 0.8s forwards; }
+.kpi { text-align:center; }
+.kpi-val { font-family:var(–mono); font-size:1.9rem; font-weight:600; line-height:1; }
+.kpi-val.c { color:var(–cyan); }
+.kpi-val.r { color:var(–red); }
+.kpi-val.g { color:var(–gold); }
+.kpi-val.gr { color:var(–green); }
+.kpi-lbl { font-family:var(–mono); font-size:0.5rem; letter-spacing:0.18em; color:var(–steel); text-transform:uppercase; margin-top:0.3rem; }
+.h-scroll { position:absolute; bottom:1.8rem; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:0.4rem; font-family:var(–mono); font-size:0.5rem; letter-spacing:0.3em; color:var(–steel-dim); animation:fl 2s ease-in-out infinite; }
+.h-scroll-line { width:1px; height:36px; background:linear-gradient(to bottom, var(–steel-dim), transparent); }
+/* Radar widget */
+.radar-wrap { position:absolute; bottom:12%; right:6%; width:140px; height:140px; opacity:0.55; }
+.r-ring { position:absolute; inset:0; border-radius:50%; border:1px solid rgba(62,214,208,0.18); }
+.r-ring:nth-child(2){inset:22%; border-color:rgba(62,214,208,0.25);}
+.r-ring:nth-child(3){inset:44%; border-color:rgba(62,214,208,0.4);}
+.r-cross { position:absolute; inset:0; }
+.r-cross::before,.r-cross::after { content:’’; position:absolute; background:rgba(62,214,208,0.12); }
+.r-cross::before { width:1px; height:100%; left:50%; }
+.r-cross::after { height:1px; width:100%; top:50%; }
+.r-sweep { position:absolute; inset:0; border-radius:50%; overflow:hidden; animation:sweep 3.5s linear infinite; }
+.r-sweep::after { content:’’; position:absolute; top:50%; left:50%; width:50%; height:2px; transform-origin:left; background:linear-gradient(90deg,transparent,var(–cyan)); margin-top:-1px; }
+.r-dot { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:5px; height:5px; background:var(–cyan); border-radius:50%; box-shadow:0 0 8px var(–cyan); }
+@keyframes sweep { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+@keyframes fuD { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fl { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(5px)} }
+
+/* ═══ TICKER ═══ */
+.ticker { background:rgba(5,8,13,0.97); border-top:1px solid var(–border); border-bottom:1px solid var(–border); padding:0.45rem 0; overflow:hidden; position:relative; }
+.ticker::before,.ticker::after { content:’’; position:absolute; top:0; bottom:0; width:60px; z-index:2; }
+.ticker::before { left:0; background:linear-gradient(90deg,rgba(5,8,13,1),transparent); }
+.ticker::after { right:0; background:linear-gradient(-90deg,rgba(5,8,13,1),transparent); }
+.t-track { display:flex; gap:2rem; animation:tick 45s linear infinite; white-space:nowrap; }
+@keyframes tick { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+.t-item { display:flex; align-items:center; gap:0.5rem; font-family:var(–mono); font-size:0.6rem; letter-spacing:0.06em; }
+.t-sym { color:var(–steel); }
+.t-val { color:var(–white); font-weight:500; }
+.t-up { color:var(–green); font-size:0.53rem; }
+.t-dn { color:var(–red); font-size:0.53rem; }
+.t-sep { color:rgba(62,214,208,0.2); }
+
+/* ═══ LAYOUT ═══ */
+.wrap { max-width:1300px; margin:0 auto; padding:0 1.5rem; }
+
+/* ═══ SECTION HEADER ═══ */
+.sh { display:flex; align-items:center; gap:0.8rem; padding-top:4rem; margin-bottom:2rem; }
+.sh-num { font-family:var(–mono); font-size:0.52rem; color:var(–cyan); border:1px solid var(–border-md); padding:0.2rem 0.45rem; letter-spacing:0.15em; }
+.sh-line { flex:1; height:1px; background:linear-gradient(90deg,var(–border-md),transparent); }
+.sh-title { font-family:var(–cond); font-size:clamp(1.4rem,2.5vw,2.1rem); font-weight:700; letter-spacing:0.04em; text-transform:uppercase; }
+.sh-title .c { color:var(–cyan); }
+
+/* ═══ REVEAL ═══ */
+.rv { opacity:0; transform:translateY(18px); transition:opacity 0.65s, transform 0.65s; }
+.rv.vis { opacity:1; transform:translateY(0); }
+
+/* ═══ CHART CONTAINERS ═══ */
+.charts-row { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; margin-bottom:1.2rem; }
+.charts-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.2rem; margin-bottom:1.2rem; }
+@media(max-width:900px){ .charts-row,.charts-row-3 { grid-template-columns:1fr; } }
+
+.chart-card {
+background:var(–panel);
+border:1px solid var(–border);
+padding:1.2rem;
+position:relative;
+overflow:hidden;
+transition:border-color 0.2s;
+}
+.chart-card:hover { border-color:var(–border-md); }
+.chart-card::before {
+content:’’; position:absolute; top:0; left:0; right:0; height:2px;
+background:linear-gradient(90deg, var(–cyan), transparent);
+}
+.chart-card.red-top::before { background:linear-gradient(90deg, var(–red), transparent); }
+.chart-card.gold-top::before { background:linear-gradient(90deg, var(–gold), transparent); }
+.chart-card.green-top::before { background:linear-gradient(90deg, var(–green), transparent); }
+.cc-label { font-family:var(–mono); font-size:0.52rem; letter-spacing:0.2em; color:var(–cyan); text-transform:uppercase; margin-bottom:0.3rem; }
+.cc-label.r { color:var(–red); }
+.cc-label.g { color:var(–gold); }
+.cc-label.gr { color:var(–green); }
+.cc-title { font-family:var(–cond); font-size:0.95rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.8rem; }
+.cc-canvas { position:relative; }
+.cc-note { font-family:var(–mono); font-size:0.55rem; color:var(–steel-dim); margin-top:0.5rem; letter-spacing:0.05em; }
+
+/* ═══ STAT CARDS ═══ */
+.stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(–border); border:1px solid var(–border); margin-bottom:1.2rem; }
+@media(max-width:700px){ .stat-row { grid-template-columns:1fr 1fr; } }
+.stat-card { background:var(–panel); padding:1.1rem 1rem; }
+.sc-emoji { font-size:1.5rem; margin-bottom:0.4rem; }
+.sc-val { font-family:var(–mono); font-size:1.5rem; font-weight:600; line-height:1; margin-bottom:0.2rem; }
+.sc-val.c { color:var(–cyan); }
+.sc-val.r { color:var(–red); }
+.sc-val.g { color:var(–gold); }
+.sc-val.gr { color:var(–green); }
+.sc-lbl { font-family:var(–mono); font-size:0.5rem; letter-spacing:0.15em; color:var(–steel); text-transform:uppercase; }
+
+/* ═══ TIMELINE ═══ */
+.tl-wrap { position:relative; padding-left:0; }
+.tl-spine { position:absolute; left:130px; top:0; bottom:0; width:1px; background:linear-gradient(to bottom,transparent,var(–border-md) 8%,var(–border-md) 92%,transparent); }
+.tl-item { display:grid; grid-template-columns:130px 1fr; margin-bottom:2.2rem; opacity:0; transform:translateX(-15px); transition:opacity 0.55s, transform 0.55s; }
+.tl-item.vis { opacity:1; transform:translateX(0); }
+@media(max-width:600px){ .tl-spine{display:none;} .tl-item{grid-template-columns:1fr;} .tl-date-col{margin-bottom:0.4rem;} }
+.tl-date-col { padding-right:1.3rem; text-align:right; padding-top:0.1rem; }
+.tl-yr { font-family:var(–mono); font-size:0.65rem; font-weight:600; color:var(–cyan); letter-spacing:0.08em; }
+.tl-mo { font-family:var(–mono); font-size:0.52rem; color:var(–steel); }
+.tl-body-col { position:relative; padding-left:1.8rem; }
+.tl-node { position:absolute; left:-5px; top:5px; width:10px; height:10px; border-radius:50%; border:1px solid var(–cyan); background:var(–void); }
+.tl-node.hot { background:var(–red); border-color:var(–red); box-shadow:0 0 8px rgba(255,77,77,0.5); }
+.tl-node.key { background:var(–cyan); border-color:var(–cyan); box-shadow:0 0 10px var(–cyan-dim); }
+.tl-tag { font-family:var(–mono); font-size:0.52rem; letter-spacing:0.15em; color:var(–steel); text-transform:uppercase; margin-bottom:0.2rem; }
+.tl-title { font-family:var(–cond); font-size:1rem; font-weight:700; text-transform:uppercase; margin-bottom:0.3rem; }
+.tl-desc { font-size:0.82rem; color:var(–steel); line-height:1.6; }
+.tl-desc strong { color:var(–white); }
+
+/* ═══ INTEL GRID ═══ */
+.intel-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(–border); border:1px solid var(–border); }
+@media(max-width:800px){ .intel-grid{grid-template-columns:1fr 1fr;} }
+@media(max-width:520px){ .intel-grid{grid-template-columns:1fr;} }
+.ip { background:var(–panel); padding:1.3rem; transition:background 0.2s; position:relative; overflow:hidden; }
+.ip:hover { background:var(–panel2); }
+.ip-emoji { font-size:1.6rem; margin-bottom:0.6rem; }
+.ip-tag { font-family:var(–mono); font-size:0.5rem; letter-spacing:0.2em; color:var(–cyan); text-transform:uppercase; margin-bottom:0.3rem; }
+.ip-tag.r { color:var(–red); }
+.ip-tag.g { color:var(–gold); }
+.ip-title { font-family:var(–cond); font-size:0.92rem; font-weight:700; text-transform:uppercase; margin-bottom:0.5rem; }
+.ip-body { font-size:0.78rem; color:var(–steel); line-height:1.6; }
+.ip-body strong { color:var(–white); }
+.ip.ft { background:linear-gradient(135deg,rgba(62,214,208,0.06),var(–panel)); border-top:2px solid var(–cyan); }
+.ip.al { background:linear-gradient(135deg,rgba(255,77,77,0.06),var(–panel)); border-top:2px solid var(–red); }
+
+/* ═══ MARKET MATRIX ═══ */
+.mkt { display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(–border); border:1px solid var(–border); }
+@media(max-width:700px){ .mkt{grid-template-columns:1fr;} }
+.mr { background:var(–panel); padding:0.9rem 1.1rem; display:flex; justify-content:space-between; align-items:flex-start; gap:0.8rem; transition:background 0.2s; }
+.mr:hover { background:var(–panel2); }
+.mr-info { flex:1; }
+.mr-emoji { font-size:1.1rem; margin-bottom:0.3rem; }
+.mr-asset { font-family:var(–cond); font-size:0.88rem; font-weight:700; text-transform:uppercase; }
+.mr-hz { font-family:var(–mono); font-size:0.5rem; letter-spacing:0.12em; color:var(–steel-dim); text-transform:uppercase; margin:0.15rem 0 0.3rem; }
+.mr-desc { font-size:0.75rem; color:var(–steel); line-height:1.5; }
+.sig { font-family:var(–mono); font-size:0.52rem; font-weight:600; letter-spacing:0.08em; padding:0.2rem 0.45rem; border-radius:2px; white-space:nowrap; align-self:flex-start; }
+.s-b { background:var(–green-dim); color:var(–green); border:1px solid rgba(74,222,128,0.25); }
+.s-r { background:var(–red-dim); color:var(–red); border:1px solid rgba(255,77,77,0.25); }
+.s-w { background:var(–gold-dim); color:var(–gold); border:1px solid rgba(232,201,122,0.25); }
+.s-v { background:rgba(62,214,208,0.07); color:var(–cyan); border:1px solid var(–border-md); }
+
+/* ═══ SCENARIOS ═══ */
+.scen-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem; }
+@media(max-width:800px){ .scen-grid{grid-template-columns:1fr;} }
+.sc { background:var(–panel); border:1px solid var(–border); overflow:hidden; }
+.sc-head { padding:0.9rem 1.1rem 0.7rem; border-bottom:1px solid var(–border); display:flex; justify-content:space-between; align-items:center; }
+.sc-num { font-family:var(–mono); font-size:0.52rem; letter-spacing:0.18em; color:var(–steel); }
+.sc-badge { font-family:var(–mono); font-size:0.48rem; letter-spacing:0.12em; text-transform:uppercase; padding:0.18rem 0.45rem; border:1px solid; }
+.sc-badge.h { color:var(–red); border-color:rgba(255,77,77,0.35); }
+.sc-badge.m { color:var(–gold); border-color:rgba(232,201,122,0.3); }
+.sc-badge.s { color:var(–cyan); border-color:var(–border-md); }
+.sc-emo { font-size:1.5rem; padding:0.8rem 1.1rem 0; }
+.sc-title { font-family:var(–cond); font-size:1rem; font-weight:700; text-transform:uppercase; padding:0.3rem 1.1rem 0.2rem; }
+.sc-period { font-family:var(–mono); font-size:0.56rem; letter-spacing:0.12em; color:var(–cyan); padding:0 1.1rem 0.7rem; }
+.sc-ul { list-style:none; padding:0 1.1rem 1.1rem; }
+.sc-ul li { font-size:0.77rem; color:var(–steel); padding:0.35rem 0 0.35rem 0.9rem; border-bottom:1px solid rgba(62,214,208,0.04); position:relative; }
+.sc-ul li::before { content:‘▸’; position:absolute; left:0; color:var(–cyan); font-size:0.58rem; top:0.45rem; }
+.sc-ul li strong { color:var(–white); }
+
+/* ═══ PULLQUOTE ═══ */
+.pq { border:1px solid var(–border-md); background:linear-gradient(135deg,rgba(62,214,208,0.04),transparent); padding:2rem; position:relative; margin:3rem 0; overflow:hidden; }
+.pq::after { content:’’; position:absolute; top:0; left:0; width:3px; height:100%; background:linear-gradient(to bottom,var(–cyan),transparent); }
+.pq-text { font-family:var(–cond); font-size:clamp(1.05rem,1.8vw,1.45rem); font-weight:300; font-style:italic; line-height:1.55; color:var(–white); }
+.pq-src { font-family:var(–mono); font-size:0.52rem; letter-spacing:0.2em; color:var(–cyan); text-transform:uppercase; margin-top:0.8rem; }
+
+/* ═══ EDITORIAL ═══ */
+.editorial { background:var(–deep); border:1px solid var(–border); border-top:2px solid var(–cyan); padding:2.5rem; margin:3rem 0 1rem; }
+.ed-label { font-family:var(–mono); font-size:0.52rem; letter-spacing:0.28em; color:var(–cyan); text-transform:uppercase; margin-bottom:1.2rem; }
+.ed-body { display:grid; grid-template-columns:1fr 1fr; gap:2.5rem; }
+@media(max-width:700px){ .ed-body{grid-template-columns:1fr;} }
+.ed-body p { font-size:0.86rem; color:var(–steel); line-height:1.75; margin-bottom:0.8rem; }
+.ed-body p strong { color:var(–white); }
+
+/* ═══ CTA INSTAGRAM ═══ */
+.cta-section {
+background: linear-gradient(135deg, rgba(62,214,208,0.06), rgba(255,77,77,0.04), var(–deep));
+border: 1px solid var(–border-md);
+border-top: 2px solid var(–cyan);
+padding: 3rem 2.5rem;
+text-align: center;
+margin: 1rem 0 0;
+position: relative;
+overflow: hidden;
+}
+.cta-section::before {
+content: ‘’;
+position: absolute; inset: 0;
+background-image: linear-gradient(rgba(62,214,208,0.03) 1px, transparent 1px), linear-gradient(90deg,rgba(62,214,208,0.03) 1px,transparent 1px);
+background-size: 40px 40px;
+}
+.cta-emoji { font-size: 2.8rem; margin-bottom: 0.8rem; display:block; position:relative; z-index:1; }
+.cta-title { font-family:var(–cond); font-size:clamp(1.5rem,3vw,2.4rem); font-weight:800; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.6rem; position:relative; z-index:1; }
+.cta-title .c { color:var(–cyan); }
+.cta-sub { font-size:0.88rem; color:var(–steel); max-width:560px; margin:0 auto 1.5rem; line-height:1.65; position:relative; z-index:1; }
+.cta-sub strong { color:var(–white); }
+.cta-btn {
+display: inline-flex; align-items:center; gap:0.6rem;
+background: linear-gradient(135deg, rgba(62,214,208,0.15), rgba(62,214,208,0.08));
+border: 1px solid var(–border-md);
+color: var(–cyan);
+font-family: var(–mono);
+font-size: 0.7rem;
+font-weight: 600;
+letter-spacing: 0.2em;
+text-transform: uppercase;
+padding: 0.8rem 2rem;
+cursor: pointer;
+text-decoration: none;
+transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+position: relative; z-index:1;
+}
+.cta-btn:hover { background:rgba(62,214,208,0.2); border-color:var(–cyan); box-shadow:0 0 20px rgba(62,214,208,0.15); }
+.cta-note { font-family:var(–mono); font-size:0.52rem; letter-spacing:0.15em; color:var(–steel-dim); margin-top:1rem; text-transform:uppercase; position:relative; z-index:1; }
+
+/* ═══ FOOTER ═══ */
+footer { background:var(–void); border-top:1px solid var(–border); padding:2rem; text-align:center; }
+.ft-brand { font-family:var(–mono); font-size:0.65rem; font-weight:600; letter-spacing:0.25em; color:var(–cyan); margin-bottom:0.4rem; }
+.ft-line { font-family:var(–mono); font-size:0.5rem; letter-spacing:0.12em; color:var(–steel-dim); margin-bottom:0.8rem; }
+.ft-disc { font-size:0.7rem; color:var(–steel-dim); max-width:580px; margin:0 auto; }
+
+/* ═══ DIVIDER ═══ */
+.div { height:1px; background:linear-gradient(90deg,transparent,var(–border-md),transparent); margin:0; }
+</style>
+
+</head>
+<body>
+
+<!-- TOPBAR -->
+
+<nav class="topbar" id="topbar">
+  <div class="tb-left">
+    <span class="tb-brand">🛢️ CryptoComiks · Intel</span>
+    <span class="tb-alert"><span class="dot dot-red"></span>ALERTE CRITIQUE</span>
+    <span class="tb-alert"><span class="dot dot-grn"></span>LIVE · 28 AVR 2026</span>
+  </div>
+  <div class="tb-right">
+    <span>BRENT <span class="tb-price alert" id="brent">$113.40</span></span>
+    <span>WTI <span class="tb-price alert" id="wti">$102.10</span></span>
+    <span>ORMUZ <span class="tb-price alert">⚠ PERTURBÉ</span></span>
+  </div>
+</nav>
+
+<!-- HERO -->
+
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="radar-wrap">
+    <div class="r-ring"></div><div class="r-ring"></div><div class="r-ring"></div>
+    <div class="r-cross"></div>
+    <div class="r-sweep"></div>
+    <div class="r-dot"></div>
+  </div>
+  <div class="hero-content">
+    <div class="h-classify">🔴 DOSSIER CLASSIFIÉ · ÉNERGIE MONDIALE 🛢️</div>
+    <div class="h-date">28 AVRIL 2026 · ABU DHABI / VIENNE · EFFECTIF 1ER MAI</div>
+    <h1 class="h-title"><span class="c">EAU</span> 🇦🇪<br>QUITTE<br>L'<span class="r">OPEP</span> 🛢️</h1>
+    <p class="h-sub">Analyse géopolitique & intelligence marchés — CryptoComiks</p>
+    <div class="h-kpis">
+      <div class="kpi"><div class="kpi-val c">4,8 Mb/j</div><div class="kpi-lbl">🛢️ Capacité libérée</div></div>
+      <div class="kpi"><div class="kpi-val r">59 ans</div><div class="kpi-lbl">📅 Durée d'appartenance</div></div>
+      <div class="kpi"><div class="kpi-val g">$113</div><div class="kpi-lbl">📈 Brent après annonce</div></div>
+      <div class="kpi"><div class="kpi-val gr">+$50Md</div><div class="kpi-lbl">💰 Rev. suppl. estimés/an</div></div>
+    </div>
+  </div>
+  <div class="h-scroll"><span>SCROLL</span><div class="h-scroll-line"></div></div>
+</section>
+
+<!-- TICKER -->
+
+<div class="ticker">
+  <div class="t-track" id="ttrack">
+    <span class="t-item"><span class="t-sym">🛢️ BRENT</span><span class="t-val">$113.40</span><span class="t-up">▲ +8.2%</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">⛽ WTI</span><span class="t-val">$102.10</span><span class="t-up">▲ +6.4%</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">🇦🇪 ADNOC</span><span class="t-val">HORS QUOTA</span><span class="t-up">LIBRE</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">🇸🇦 ARAMCO</span><span class="t-val">SOUS PRESSION</span><span class="t-dn">▼ VISION 2030</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">🌍 OPEP+</span><span class="t-val">44% prod. mondiale</span><span class="t-dn">▼ -4pts/fév.</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">⚠️ ORMUZ</span><span class="t-val">PERTURBÉ</span><span class="t-dn">20% flux mondiaux</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">🇺🇸 ExxonMobil</span><span class="t-val">UAE ops</span><span class="t-up">▲ BÉNÉFICIAIRE</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">💵 PÉTRODOLLAR</span><span class="t-val">57% réserves FX</span><span class="t-dn">▼ vs 72% (2001)</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">🛡️ IRON DOME</span><span class="t-val">déployé UAE</span><span class="t-up">1ère fois HIST.</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">📊 MURBAN</span><span class="t-val">benchmark WIP</span><span class="t-up">▲ vs BRENT</span></span><span class="t-sep">·</span>
+    <!-- duplicate for loop -->
+    <span class="t-item"><span class="t-sym">🛢️ BRENT</span><span class="t-val">$113.40</span><span class="t-up">▲ +8.2%</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">⛽ WTI</span><span class="t-val">$102.10</span><span class="t-up">▲ +6.4%</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">🇦🇪 ADNOC</span><span class="t-val">HORS QUOTA</span><span class="t-up">LIBRE</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">🇸🇦 ARAMCO</span><span class="t-val">SOUS PRESSION</span><span class="t-dn">▼ VISION 2030</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">🌍 OPEP+</span><span class="t-val">44% prod. mondiale</span><span class="t-dn">▼ -4pts/fév.</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">⚠️ ORMUZ</span><span class="t-val">PERTURBÉ</span><span class="t-dn">20% flux mondiaux</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">🇺🇸 ExxonMobil</span><span class="t-val">UAE ops</span><span class="t-up">▲ BÉNÉFICIAIRE</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">💵 PÉTRODOLLAR</span><span class="t-val">57% réserves FX</span><span class="t-dn">▼ vs 72% (2001)</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">🛡️ IRON DOME</span><span class="t-val">déployé UAE</span><span class="t-up">1ère fois HIST.</span></span><span class="t-sep">·</span>
+    <span class="t-item"><span class="t-sym">📊 MURBAN</span><span class="t-val">benchmark WIP</span><span class="t-up">▲ vs BRENT</span></span>
+  </div>
+</div>
+
+<!-- ══════════ MAIN ══════════ -->
+
+<main class="wrap">
+
+  <!-- STAT ROW -->
+
+  <div class="sh rv">
+    <span class="sh-num">// KPI</span>
+    <div class="sh-line"></div>
+    <h2 class="sh-title">Chiffres clés <span class="c">— L'événement en données</span></h2>
+    <div class="sh-line" style="background:linear-gradient(90deg,transparent,var(--border-md));"></div>
+  </div>
+  <div class="stat-row rv">
+    <div class="stat-card">
+      <div class="sc-emoji">🛢️</div>
+      <div class="sc-val c">4,8 Mb/j</div>
+      <div class="sc-lbl">Capacité prod. EAU libérée</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-emoji">💰</div>
+      <div class="sc-val g">+$50 Md</div>
+      <div class="sc-lbl">Revenus suppl. estimés/an</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-emoji">📉</div>
+      <div class="sc-val r">44%</div>
+      <div class="sc-lbl">Part OPEP+ prod. mondiale</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-emoji">⚡</div>
+      <div class="sc-val c">$113</div>
+      <div class="sc-lbl">Brent · Post-annonce</div>
+    </div>
+  </div>
+
+  <div class="div"></div>
+
+  <!-- PART I — TIMELINE -->
+
+  <div class="sh rv">
+    <span class="sh-num">// 01</span>
+    <div class="sh-line"></div>
+    <h2 class="sh-title">📅 Chronologie — <span class="c">La rupture annoncée</span></h2>
+    <div class="sh-line" style="background:linear-gradient(90deg,transparent,var(--border-md));"></div>
+  </div>
+  <div class="tl-wrap rv">
+    <div class="tl-spine"></div>
+    <div class="tl-item">
+      <div class="tl-date-col"><div class="tl-yr">1967–71</div><div class="tl-mo">Fondation</div></div>
+      <div class="tl-body-col"><div class="tl-node"></div><div class="tl-tag">entrée dans le cartel</div><div class="tl-title">🇦🇪 Abu Dhabi rejoint l'OPEP</div><div class="tl-desc">L'émirat d'Abu Dhabi adhère dès 1967 avant que les EAU unifié n'héritent du siège en 1971. <strong>59 ans d'appartenance</strong> allaient s'écouler avant la sortie du 1er mai 2026.</div></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date-col"><div class="tl-yr">2016</div><div class="tl-mo">Tournant</div></div>
+      <div class="tl-body-col"><div class="tl-node"></div><div class="tl-tag">naissance OPEP+</div><div class="tl-title">🔒 Quotas injustes — le germe du conflit</div><div class="tl-desc">Les quotas sont fixés sur la base d'octobre 2018 : <strong>3,2 Mb/j pour les EAU</strong>, alors que leurs capacités dépassent déjà ce plafond. ADNOC investit massivement. Chaque baril sous quota = perte sèche.</div></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date-col"><div class="tl-yr">JUIL. 2021</div><div class="tl-mo">Explosion</div></div>
+      <div class="tl-body-col"><div class="tl-node hot"></div><div class="tl-tag">🔴 Confrontation publique</div><div class="tl-title">💥 Abou Dhabi bloque les réunions OPEP+</div><div class="tl-desc">Les EAU refusent d'étendre les réductions de production aux termes saoudiens. <strong>MBS cède 500 000 b/j supplémentaires.</strong> Compromis provisoire, fracture durable. La presse arabe commence à parler de « divorce du Golfe ».</div></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date-col"><div class="tl-yr">2022–23</div><div class="tl-mo">Rivalité</div></div>
+      <div class="tl-body-col"><div class="tl-node"></div><div class="tl-tag">rivalité régionale</div><div class="tl-title">⚔️ Yémen, Soudan, OPEP — le divorce stratégique</div><div class="tl-desc">Les deux pays soutiennent des factions adverses au Yémen et au Soudan. Le WSJ rapporte que <strong>MBS aurait déclaré que les EAU lui ont « planté un couteau dans le dos »</strong>. La production émiratie dépasse secrètement ses quotas déclarés.</div></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date-col"><div class="tl-yr">2025–26</div><div class="tl-mo">Catalyseur</div></div>
+      <div class="tl-body-col"><div class="tl-node hot"></div><div class="tl-tag">🔴 Guerre iranienne</div><div class="tl-title">🚀 Missiles iraniens — L'Arabie saoudite reste à l'écart</div><div class="tl-desc">L'Iran pilonne les EAU de missiles et drones. Ormuz partiellement bloqué. <strong>Le CCG et la Ligue arabe restent politiquement en retrait.</strong> Washington déploie Iron Dome sur sol émirati — une première mondiale. Gargash : « position la plus faible historiquement du CCG ».</div></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date-col"><div class="tl-yr">28 AVR 2026</div><div class="tl-mo">Rupture</div></div>
+      <div class="tl-body-col"><div class="tl-node key"></div><div class="tl-tag">💥 déclaration d'indépendance</div><div class="tl-title">🇦🇪 Les EAU quittent l'OPEP & l'OPEP+</div><div class="tl-desc">Le ministre Al Mazrouei annonce le retrait. Interrogé sur une concertation avec Riyad : <strong>« Nous n'avons consulté aucun pays »</strong>. Le Brent dépasse $113. Le WTI franchit $102. La rupture est consommée.</div></div>
+    </div>
+  </div>
+
+  <!-- 📊 Graphiques — après chronologie -->
+
+  <div class="charts-row rv" style="margin-top:0.5rem;">
+    <div class="chart-card red-top">
+      <div class="cc-label r">📈 Évolution des prix</div>
+      <div class="cc-title">Brent & WTI — 2026 (jan–avr)</div>
+      <div class="cc-canvas"><canvas id="chartPrix" height="200"></canvas></div>
+      <div class="cc-note">⚡ Le WTI franchit $102 après l'annonce — 1er passage depuis le 10 avril</div>
+    </div>
+    <div class="chart-card gold-top">
+      <div class="cc-label g">🛢️ Part de marché</div>
+      <div class="cc-title">OPEP+ — Part de la production mondiale (%)</div>
+      <div class="cc-canvas"><canvas id="chartPart" height="200"></canvas></div>
+      <div class="cc-note">📉 Chute de 48% → 44% depuis la crise Ormuz. La sortie EAU accélère la tendance.</div>
+    </div>
+  </div>
+
+  <div class="div"></div>
+
+  <!-- PART II — RAISONS -->
+
+  <div class="sh rv">
+    <span class="sh-num">// 02</span>
+    <div class="sh-line"></div>
+    <h2 class="sh-title">🔍 Intel — <span class="c">Les vraies raisons</span></h2>
+    <div class="sh-line" style="background:linear-gradient(90deg,transparent,var(--border-md));"></div>
+  </div>
+  <div class="intel-grid rv">
+    <div class="ip ft">
+      <div class="ip-emoji">⏳</div>
+      <div class="ip-tag">Stratégie énergétique</div>
+      <div class="ip-title">Course contre la montre fossile</div>
+      <div class="ip-body">Les EAU ont investi <strong>$122 milliards</strong> pour atteindre 5 Mb/j d'ici 2027. La demande fossile se ferme vers 2040. Chaque baril bloqué sous quota = <strong>actif stranded</strong> sans valeur future. La logique : monétiser maintenant.</div>
+    </div>
+    <div class="ip">
+      <div class="ip-emoji">📊</div>
+      <div class="ip-tag">Finance internationale</div>
+      <div class="ip-title">Murban vs Brent — 3ᵉ benchmark mondial</div>
+      <div class="ip-body">Le brut <strong>Murban</strong> ambitionne de concurrencer Brent et WTI. Pour imposer ce statut, les EAU ont besoin d'une <strong>flexibilité de production totale</strong>. L'OPEP était le verrou structurel.</div>
+    </div>
+    <div class="ip">
+      <div class="ip-emoji">🌏</div>
+      <div class="ip-tag">Géopolitique commerciale</div>
+      <div class="ip-title">Boussole asiatique — Chine & Inde</div>
+      <div class="ip-body">La demande mondiale migre vers l'Asie. Les EAU veulent signer des <strong>accords directs en yuan ou dirham</strong> avec Pékin et New Delhi, court-circuitant le mécanisme OPEP favorable à Riyad (&gt;80$/b requis).</div>
+    </div>
+    <div class="ip al">
+      <div class="ip-emoji">🤝</div>
+      <div class="ip-tag r">Alliance stratégique</div>
+      <div class="ip-title">Pivot Washington – Tel Aviv – Abu Dhabi</div>
+      <div class="ip-body">Rubio rencontre le ministre émirati le 26 avril. <strong>Iron Dome déployé aux EAU pour la 1ère fois de l'histoire.</strong> Ligne de swap ~$20 Md négociée avec Scott Bessent (Trésor US). L'alignement est sans ambiguïté.</div>
+    </div>
+    <div class="ip al">
+      <div class="ip-emoji">🗡️</div>
+      <div class="ip-tag r">Trahison perçue</div>
+      <div class="ip-title">Isolement arabe — Le vrai déclencheur</div>
+      <div class="ip-body">La goutte décisive n'est pas économique. <strong>L'absence militaire des « frères » arabes pendant les attaques iraniennes</strong> a transformé une divergence économique en rupture existentielle. Le retrait OPEP est la réponse symbolique à cette trahison.</div>
+    </div>
+    <div class="ip">
+      <div class="ip-emoji">🌱</div>
+      <div class="ip-tag">Vision long terme</div>
+      <div class="ip-title">Hydrogène, ammoniac, énergies vertes</div>
+      <div class="ip-body">Abu Dhabi veut devenir <strong>hub mondial de l'hydrogène et des énergies renouvelables</strong> d'ici 2035. Cette transition nécessite des liquidités massives immédiates — seule la production maximale libre peut les générer.</div>
+    </div>
+  </div>
+
+  <!-- 📊 Graphiques — après Intel -->
+
+  <div class="charts-row rv" style="margin-top:0.5rem;">
+    <div class="chart-card">
+      <div class="cc-label">🇦🇪 Capacité vs Quota</div>
+      <div class="cc-title">EAU — Capacité réelle vs quota OPEP (Mb/j)</div>
+      <div class="cc-canvas"><canvas id="chartEau" height="200"></canvas></div>
+      <div class="cc-note">🔒 +1,7 Mb/j bridés par les quotas. La sortie libère cette capacité.</div>
+    </div>
+    <div class="chart-card green-top">
+      <div class="cc-label gr">📊 Investissement EAU</div>
+      <div class="cc-title">ADNOC — Capacité cible 2027 (Mb/j)</div>
+      <div class="cc-canvas"><canvas id="chartAdnoc" height="200"></canvas></div>
+      <div class="cc-note">🚀 $122 Md investis pour atteindre 5 Mb/j d'ici 2027.</div>
+    </div>
+  </div>
+
+  <div class="div" style="margin-top:1rem;"></div>
+
+  <!-- PART III — MARCHÉS -->
+
+  <div class="sh rv">
+    <span class="sh-num">// 03</span>
+    <div class="sh-line"></div>
+    <h2 class="sh-title">💹 Marchés — <span class="c">Risques & opportunités</span></h2>
+    <div class="sh-line" style="background:linear-gradient(90deg,transparent,var(--border-md));"></div>
+  </div>
+  <div class="mkt rv">
+    <div class="mr">
+      <div class="mr-info"><div class="mr-emoji">🛢️</div><div class="mr-asset">Brent / WTI — Court terme</div><div class="mr-hz">0 – 6 mois</div><div class="mr-desc">Double pression contradictoire : hausse liée guerre Iran + offre émiratie bloquée par Ormuz. <strong>Volatilité extrême</strong> sur chaque signal iranien (±10-20$/b).</div></div>
+      <div class="sig s-v">⚡ VOLATILE</div>
+    </div>
+    <div class="mr">
+      <div class="mr-info"><div class="mr-emoji">📉</div><div class="mr-asset">Brent / WTI — Long terme</div><div class="mr-hz">2027 – 2030</div><div class="mr-desc">Pression baissière structurelle. OPEP+ perd son pouvoir de prix floor. <strong>Marché de producteurs → marché d'acheteurs.</strong> Les consommateurs asiatiques dictent les prix.</div></div>
+      <div class="sig s-r">▼ BAISSIER</div>
+    </div>
+    <div class="mr">
+      <div class="mr-info"><div class="mr-emoji">🇺🇸</div><div class="mr-asset">ExxonMobil / Occidental</div><div class="mr-hz">Moyen - Long terme</div><div class="mr-desc">Bénéficiaires directs : opèrent déjà aux EAU via ADNOC. <strong>+$50 Md/an de revenus supplémentaires</strong> à partager (Baker Institute, 2023).</div></div>
+      <div class="sig s-b">▲ POSITIF</div>
+    </div>
+    <div class="mr">
+      <div class="mr-info"><div class="mr-emoji">🇸🇦</div><div class="mr-asset">Aramco / Riyad</div><div class="mr-hz">Court - Moyen terme</div><div class="mr-desc">Risque de guerre des prix. Vision 2030 requiert &gt;$80/b. <strong>Sans les EAU comme tampon face à la Russie, la pression est maximale</strong> pour maintenir la discipline OPEP+.</div></div>
+      <div class="sig s-r">▼ RISQUE</div>
+    </div>
+    <div class="mr">
+      <div class="mr-info"><div class="mr-emoji">🌎</div><div class="mr-asset">Schiste US / Brésil / Guyana</div><div class="mr-hz">Long terme structurel</div><div class="mr-desc">OPEP affaibli = plus d'espace pour les producteurs hors-cartel. <strong>Petrobras, ExxonMobil Guyana, producteurs texans</strong> renforcent leurs parts de marché durablement.</div></div>
+      <div class="sig s-b">▲ POSITIF</div>
+    </div>
+    <div class="mr">
+      <div class="mr-info"><div class="mr-emoji">💵</div><div class="mr-asset">Dollar / Pétrodollar</div><div class="mr-hz">Long terme</div><div class="mr-desc">Fragilisation supplémentaire. CIPS chinois atteint 1 220 Md¥/jour. Part dollar dans réserves FX : 57%. Mais <strong>$2 000 Md de fonds souverains Golfe</strong> restent dollarisés — pas de rupture immédiate.</div></div>
+      <div class="sig s-w">⚠ SURVEILLER</div>
+    </div>
+    <div class="mr">
+      <div class="mr-info"><div class="mr-emoji">📊</div><div class="mr-asset">Murban Crude Benchmark</div><div class="mr-hz">2026+</div><div class="mr-desc">Libéré des contraintes OPEP, <strong>Murban peut s'imposer comme 3ᵉ benchmark mondial</strong> face au Brent et au WTI. Volume libre nécessaire établi.</div></div>
+      <div class="sig s-b">▲ STRATÉGIQUE</div>
+    </div>
+    <div class="mr">
+      <div class="mr-info"><div class="mr-emoji">🌡️</div><div class="mr-asset">Inflation mondiale</div><div class="mr-hz">Court terme</div><div class="mr-desc">Choc inflationniste si Ormuz reste bloqué. <strong>Prix moyen US : $4,18/gallon</strong> — record depuis le début de l'année. Les ménages absorbent la prime de risque géopolitique.</div></div>
+      <div class="sig s-r">▼ RISQUE CT</div>
+    </div>
+  </div>
+
+  <!-- 📊 Graphiques — après matrice marchés -->
+
+  <div class="charts-row-3 rv" style="margin-top:1.2rem;">
+    <div class="chart-card">
+      <div class="cc-label">🌍 Top producteurs</div>
+      <div class="cc-title">Production OPEP (Mb/j)</div>
+      <div class="cc-canvas"><canvas id="chartProd" height="220"></canvas></div>
+      <div class="cc-note">EAU = 3e producteur. Perte majeure pour le cartel.</div>
+    </div>
+    <div class="chart-card red-top">
+      <div class="cc-label r">💸 Prix de breakeven</div>
+      <div class="cc-title">Budget équilibré à quel prix ? ($/b)</div>
+      <div class="cc-canvas"><canvas id="chartBreak" height="220"></canvas></div>
+      <div class="cc-note">🇸🇦 L'Arabie saoudite a besoin de +$80/b pour Vision 2030.</div>
+    </div>
+    <div class="chart-card gold-top">
+      <div class="cc-label g">💵 Pétrodollar</div>
+      <div class="cc-title">Dollar — Part dans les réserves FX mondiales (%)</div>
+      <div class="cc-canvas"><canvas id="chartDollar" height="220"></canvas></div>
+      <div class="cc-note">⚠️ Passage de 72% (2001) → 57% (2026). Fragilisation structurelle.</div>
+    </div>
+  </div>
+
+  <!-- CHART — scénarios + acteurs -->
+
+  <div class="charts-row rv" style="margin-top:1.2rem;">
+    <div class="chart-card">
+      <div class="cc-label">📊 Scénario de prix</div>
+      <div class="cc-title">Brent — Projection court / long terme ($/b)</div>
+      <div class="cc-canvas"><canvas id="chartScen" height="220"></canvas></div>
+      <div class="cc-note">📌 Court terme : guerre maintient les prix haut. Long terme : OPEP affaibli crée pression baissière.</div>
+    </div>
+    <div class="chart-card green-top">
+      <div class="cc-label gr">🌍 Gagnants & Perdants</div>
+      <div class="cc-title">Impact relatif sur les acteurs clés (score 0–10)</div>
+      <div class="cc-canvas"><canvas id="chartActeurs" height="220"></canvas></div>
+      <div class="cc-note">📊 Score d'impact positif (vert) / négatif (rouge) de la sortie des EAU sur chaque acteur.</div>
+    </div>
+  </div>
+
+  <div class="pq rv">
+    <p class="pq-text">🛢️ Ce n'est pas simplement la sortie d'un membre de plus. C'est la confirmation que l'OPEP ne sera plus jamais l'arbitre unique du prix mondial du pétrole. La géographie du pouvoir énergétique se reconfigure — et les marchés ne l'ont pas encore pleinement intégré.</p>
+    <div class="pq-src">// CryptoComiks Intelligence · Clark & Wayne · 28 Avril 2026</div>
+  </div>
+
+  <div class="div"></div>
+
+  <!-- PART IV — SCÉNARIOS -->
+
+  <div class="sh rv">
+    <span class="sh-num">// 04</span>
+    <div class="sh-line"></div>
+    <h2 class="sh-title">🔮 Scénarios — <span class="c">Notre lecture stratégique</span></h2>
+    <div class="sh-line" style="background:linear-gradient(90deg,transparent,var(--border-md));"></div>
+  </div>
+  <div class="scen-grid rv">
+    <div class="sc">
+      <div class="sc-head"><span class="sc-num">SCN-001</span><span class="sc-badge h">⚡ PROBABLE</span></div>
+      <div class="sc-emo">🌊</div>
+      <div class="sc-title">La double tension</div>
+      <div class="sc-period">Horizon 0 – 6 mois</div>
+      <ul class="sc-ul">
+        <li>🔒 Ormuz perturbé → production supplémentaire <strong>bloquée physiquement</strong></li>
+        <li>📈 Prix &gt;$100 maintenus par la prime de risque Iran</li>
+        <li>⚡ Volatilité ±10-20$/b sur chaque signal géopolitique</li>
+        <li>🇦🇪 Les EAU veulent <strong>combler le vide laissé par l'Irak et l'Iran</strong></li>
+      </ul>
+    </div>
+    <div class="sc">
+      <div class="sc-head"><span class="sc-num">SCN-002</span><span class="sc-badge h">🔥 TRÈS PROBABLE</span></div>
+      <div class="sc-emo">💥</div>
+      <div class="sc-title">Le début de la fin pour l'OPEP</div>
+      <div class="sc-period">Horizon 6 – 24 mois</div>
+      <ul class="sc-ul">
+        <li>🇸🇦 Arabie saoudite <strong>seule contre la Russie</strong> — discipline OPEP+ s'érode</li>
+        <li>⚔️ Risque guerre des prix : scénario 2020 revisité, brut sous 60$/b possible</li>
+        <li>🌍 Koweït, Irak, Algérie <strong>réévaluent leur appartenance</strong></li>
+        <li>🛢️ Schiste US et Brésil/Guyana renforcent leurs parts durablement</li>
+      </ul>
+    </div>
+    <div class="sc">
+      <div class="sc-head"><span class="sc-num">SCN-003</span><span class="sc-badge s">🌐 STRUCTUREL</span></div>
+      <div class="sc-emo">🌱</div>
+      <div class="sc-title">Le nouveau régime pétrolier</div>
+      <div class="sc-period">Horizon 2028+</div>
+      <ul class="sc-ul">
+        <li>🌏 Marché bascule : <strong>Chine & Inde dictent les prix</strong>, non Vienne</li>
+        <li>🟢 EAU hub mondial hydrogène & énergies vertes — financé par max-production</li>
+        <li>📊 <strong>Murban s'impose</strong> comme 3ᵉ benchmark mondial</li>
+        <li>💵 Pétrodollar fragmentation continue, sans effondrement immédiat</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- EDITORIAL -->
+
+  <div class="editorial rv">
+    <div class="ed-label">// 📝 Synthèse éditoriale — Clark & Wayne</div>
+    <div class="ed-body">
+      <div>
+        <p><strong>🛢️ Le retrait des EAU de l'OPEP est un événement de rupture — pas un ajustement technique.</strong> Il acte la fin de la solidarité du Golfe comme fiction opérationnelle, l'affaiblissement structurel du cartel, et le pivot des EAU vers un axe Washington–Tel Aviv–Asie hors du cadre arabe traditionnel.</p>
+        <p>Pour les investisseurs, la clé est temporelle : à court terme, la guerre iranienne maintient des prix élevés et volatils. À moyen terme, la désintégration de l'OPEP+ installe une pression baissière. À long terme, <strong>aucun cartel ne pourra plus dicter le prix de l'énergie.</strong></p>
+      </div>
+      <div>
+        <p><strong>🇸🇦 L'Arabie saoudite est la grande perdante</strong> : isolée dans l'OPEP, fragilisée régionalement, contrainte de défendre seule des prix élevés pour financer Vision 2030. La décision émiratie était annoncée depuis 2021. Mais le timing, au cœur d'une guerre et d'une crise d'Ormuz, en fait un acte politique d'une brutalité calculée.</p>
+        <p>Ce qui se joue ici dépasse le pétrole. <strong>C'est la géographie du pouvoir régional qui se reconfigure.</strong> Et les marchés ne l'ont pas encore pleinement intégré. 🌍</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- CTA INSTAGRAM -->
+
+<div class="wrap">
+  <div class="cta-section rv">
+    <span class="cta-emoji">📲</span>
+    <h2 class="cta-title">Tu as des questions ? <span class="c">On est là.</span></h2>
+    <p class="cta-sub">
+      Cette analyse t'a plu ? Tu veux qu'on approfondisse un point — les scénarios de prix, l'impact sur ton portefeuille, la géopolitique du Golfe ou la fin du pétrodollar ?<br><br>
+      <strong>Envoie-nous un DM sur Instagram</strong> — on lit tous les messages et on essaie de répondre à tout le monde. 🙏
+    </p>
+    <a href="https://www.instagram.com/crypto_comiks" class="cta-btn" target="_blank" rel="noopener">
+      📸 @crypto_comiks sur Instagram
+    </a>
+    <div class="cta-note">💬 Telegram · 📰 Newsletter · 🎵 TikTok — rejoins la communauté</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+
+<footer>
+  <div class="ft-brand">🛢️ CryptoComiks · Intelligence Stratégique</div>
+  <div class="ft-line">Géopolitique · Énergie · Marchés · Clark & Wayne · 28 Avril 2026</div>
+  <p class="ft-disc">Document à visée éducative et informative. Ne constitue pas un conseil en investissement. Toutes les données de marché sont indicatives. © 2026 CryptoComiks.</p>
+</footer>
+
+<script>
+// ════ Chart.js global defaults ════
+Chart.defaults.color = '#7D8CA3';
+Chart.defaults.borderColor = 'rgba(62,214,208,0.08)';
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size = 10;
+
+const CYAN = '#3ED6D0';
+const RED  = '#FF4D4D';
+const GOLD = '#E8C97A';
+const GRN  = '#4ADE80';
+const STEEL= '#7D8CA3';
+const bg   = (c,a) => c.replace(')',`,${a})`).replace('rgb','rgba');
+
+// ════ 1. Prix Brent & WTI ════
+new Chart(document.getElementById('chartPrix'), {
+  type:'line',
+  data:{
+    labels:['Jan','Fév','Mar (cease-fire)','10 Avr','17 Avr','21 Avr','28 Avr ⚡'],
+    datasets:[
+      { label:'Brent ($/b)', data:[78,82,95,88,74,91,113], borderColor:CYAN, backgroundColor:'rgba(62,214,208,0.07)', tension:0.4, fill:true, pointRadius:3, pointBackgroundColor:CYAN },
+      { label:'WTI ($/b)', data:[74,78,90,83,70,87,102], borderColor:RED, backgroundColor:'rgba(255,77,77,0.05)', tension:0.4, fill:true, pointRadius:3, pointBackgroundColor:RED },
+    ]
+  },
+  options:{responsive:true, interaction:{mode:'index',intersect:false}, plugins:{legend:{display:true,labels:{boxWidth:10,color:'#7D8CA3'}},tooltip:{backgroundColor:'rgba(7,17,31,0.95)',borderColor:'rgba(62,214,208,0.2)',borderWidth:1}}, scales:{x:{grid:{color:'rgba(62,214,208,0.05)'},ticks:{color:'#4A5568'}},y:{grid:{color:'rgba(62,214,208,0.05)'},ticks:{color:'#4A5568',callback:v=>'$'+v}}}}
+});
+
+// ════ 2. Part OPEP+ ════
+new Chart(document.getElementById('chartPart'), {
+  type:'line',
+  data:{
+    labels:['Jan','Fév','Mar','Avr (EAU hors)'],
+    datasets:[{
+      label:'Part OPEP+ (%)', data:[48,48,46,44],
+      borderColor:GOLD, backgroundColor:'rgba(232,201,122,0.07)',
+      tension:0.3, fill:true, pointRadius:4, pointBackgroundColor:GOLD
+    }]
+  },
+  options:{responsive:true, plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(7,17,31,0.95)',borderColor:'rgba(232,201,122,0.2)',borderWidth:1}}, scales:{x:{grid:{color:'rgba(62,214,208,0.05)'},ticks:{color:'#4A5568'}},y:{min:40,max:52,grid:{color:'rgba(62,214,208,0.05)'},ticks:{color:'#4A5568',callback:v=>v+'%'}}}}
+});
+
+// ════ 3. EAU Capacité vs Quota ════
+new Chart(document.getElementById('chartEau'), {
+  type:'bar',
+  data:{
+    labels:['Quota OPEP\n(assigné)','Prod. réelle\n(estimée)','Capacité\n(actuelle)','Cible ADNOC\n(2027)'],
+    datasets:[{
+      data:[3.1, 3.4, 4.8, 5.0],
+      backgroundColor:['rgba(255,77,77,0.3)','rgba(232,201,122,0.3)','rgba(62,214,208,0.3)','rgba(74,222,128,0.3)'],
+      borderColor:[RED, GOLD, CYAN, GRN],
+      borderWidth:1.5
+    }]
+  },
+  options:{responsive:true, plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(7,17,31,0.95)',borderColor:'rgba(62,214,208,0.2)',borderWidth:1,callbacks:{label:ctx=>ctx.raw+' Mb/j'}}}, scales:{x:{grid:{display:false},ticks:{color:'#4A5568'}},y:{grid:{color:'rgba(62,214,208,0.05)'},ticks:{color:'#4A5568',callback:v=>v+' Mb/j'}}}}
+});
+
+// ════ 4. Pétrodollar ════
+new Chart(document.getElementById('chartDollar'), {
+  type:'line',
+  data:{
+    labels:['2001','2005','2010','2015','2020','2026'],
+    datasets:[{
+      label:'Part dollar réserves FX (%)', data:[72,66,62,63,60,57],
+      borderColor:GOLD, backgroundColor:'rgba(232,201,122,0.06)',
+      tension:0.4, fill:true, pointRadius:3, pointBackgroundColor:GOLD
+    }]
+  },
+  options:{responsive:true, plugins:{legend:{display:false}}, scales:{x:{grid:{color:'rgba(62,214,208,0.05)'},ticks:{color:'#4A5568'}},y:{min:50,max:76,grid:{color:'rgba(62,214,208,0.05)'},ticks:{color:'#4A5568',callback:v=>v+'%'}}}}
+});
+
+// ════ 5. Top producteurs OPEP ════
+new Chart(document.getElementById('chartProd'), {
+  type:'bar',
+  data:{
+    labels:['🇸🇦 Arabie Saoud.','🇮🇶 Irak','🇦🇪 EAU','🇮🇷 Iran','🇰🇼 Koweït'],
+    datasets:[{
+      label:'Production (Mb/j)',
+      data:[10.5, 4.2, 3.4, 2.8, 2.6],
+      backgroundColor:['rgba(255,77,77,0.25)','rgba(62,214,208,0.2)','rgba(62,214,208,0.45)','rgba(255,77,77,0.2)','rgba(232,201,122,0.2)'],
+      borderColor:[RED, CYAN, CYAN, RED, GOLD],
+      borderWidth:1.5
+    }]
+  },
+  options:{indexAxis:'y', responsive:true, plugins:{legend:{display:false}}, scales:{x:{grid:{color:'rgba(62,214,208,0.05)'},ticks:{color:'#4A5568',callback:v=>v+' Mb/j'}},y:{grid:{display:false},ticks:{color:'#7D8CA3'}}}}
+});
+
+// ════ 6. Breakeven budgétaire ════
+new Chart(document.getElementById('chartBreak'), {
+  type:'bar',
+  data:{
+    labels:['🇸🇦 Arabie S.','🇦🇪 EAU','🇮🇶 Irak','🇮🇷 Iran','🇰🇼 Koweït'],
+    datasets:[
+      { label:'Prix breakeven ($/b)', data:[80, 35, 65, 90, 55], backgroundColor:['rgba(255,77,77,0.3)','rgba(74,222,128,0.3)','rgba(232,201,122,0.25)','rgba(255,77,77,0.35)','rgba(62,214,208,0.25)'], borderColor:[RED,GRN,GOLD,RED,CYAN], borderWidth:1.5 },
+    ]
+  },
+  options:{responsive:true, plugins:{legend:{display:false},annotation:{}}, scales:{x:{grid:{display:false},ticks:{color:'#7D8CA3'}},y:{grid:{color:'rgba(62,214,208,0.05)'},ticks:{color:'#4A5568',callback:v=>'$'+v}}}}
+});
+
+// ════ 7. ADNOC roadmap ════
+new Chart(document.getElementById('chartAdnoc'), {
+  type:'line',
+  data:{
+    labels:['2018','2020','2022','2024','2026','2027 🎯'],
+    datasets:[{
+      label:'Capacité ADNOC (Mb/j)', data:[3.1,3.1,3.5,4.0,4.8,5.0],
+      borderColor:GRN, backgroundColor:'rgba(74,222,128,0.07)',
+      tension:0.4, fill:true, pointRadius:4, pointBackgroundColor:GRN
+    }]
+  },
+  options:{responsive:true, plugins:{legend:{display:false}}, scales:{x:{grid:{color:'rgba(62,214,208,0.05)'},ticks:{color:'#4A5568'}},y:{grid:{color:'rgba(62,214,208,0.05)'},ticks:{color:'#4A5568',callback:v=>v+' Mb/j'}}}}
+});
+
+// ════ 8. Scénario Brent projection ════
+new Chart(document.getElementById('chartScen'), {
+  type:'line',
+  data:{
+    labels:['Avr 26','Mai','Jun','Sep','Déc 26','Mid 27','2028','2029','2030'],
+    datasets:[
+      { label:'Scén. Guerre Iran (prix hauts)', data:[113,118,115,110,105,95,82,75,70], borderColor:RED, backgroundColor:'rgba(255,77,77,0.06)', tension:0.4, fill:false, borderDash:[5,3], pointRadius:2 },
+      { label:'Scén. Désescalade (baseline)', data:[113,108,100,95,90,82,75,70,65], borderColor:CYAN, backgroundColor:'rgba(62,214,208,0.06)', tension:0.4, fill:true, pointRadius:3 },
+      { label:'Scén. Guerre des prix OPEP', data:[113,105,90,78,65,60,58,55,55], borderColor:GOLD, backgroundColor:'rgba(232,201,122,0.04)', tension:0.4, fill:false, borderDash:[3,3], pointRadius:2 },
+    ]
+  },
+  options:{responsive:true, interaction:{mode:'index',intersect:false}, plugins:{legend:{display:true,labels:{boxWidth:10,color:'#7D8CA3',font:{size:9}}}}, scales:{x:{grid:{color:'rgba(62,214,208,0.05)'},ticks:{color:'#4A5568'}},y:{grid:{color:'rgba(62,214,208,0.05)'},ticks:{color:'#4A5568',callback:v=>'$'+v}}}}
+});
+
+// ════ 9. Acteurs gagnants/perdants ════
+new Chart(document.getElementById('chartActeurs'), {
+  type:'bar',
+  data:{
+    labels:['🇦🇪 EAU','🇺🇸 États-Unis','🌏 Chine/Inde','🛢️ Schiste US','🇸🇦 Arabie S.','🌍 OPEP','💵 Pétrodollar'],
+    datasets:[{
+      label:'Impact (positif / négatif)',
+      data:[9, 8, 7, 7, -8, -7, -4],
+      backgroundColor: ctx => ctx.raw >= 0 ? 'rgba(74,222,128,0.3)' : 'rgba(255,77,77,0.3)',
+      borderColor: ctx => ctx.raw >= 0 ? GRN : RED,
+      borderWidth: 1.5
+    }]
+  },
+  options:{
+    responsive:true, indexAxis:'y',
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{min:-10,max:10, grid:{color:'rgba(62,214,208,0.05)'}, ticks:{color:'#4A5568',callback:v=>v>0?'+'+v:v}},
+      y:{grid:{display:false}, ticks:{color:'#7D8CA3'}}
+    }
+  }
+});
+
+// ════ Scroll reveal ════
+const obs = new IntersectionObserver(entries => entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('vis'); }), {threshold:0.08});
+document.querySelectorAll('.rv, .tl-item').forEach(el => obs.observe(el));
+
+// ════ Live price ticker ════
+let b=113.40, w=102.10;
+setInterval(()=>{
+  b += (Math.random()-0.48)*0.25;
+  w += (Math.random()-0.48)*0.22;
+  document.getElementById('brent').textContent = '$'+b.toFixed(2);
+  document.getElementById('wti').textContent   = '$'+w.toFixed(2);
+},2500);
+
+// ════ Topbar on scroll ════
+let lastY=0;
+const tb = document.getElementById('topbar');
+window.addEventListener('scroll',()=>{
+  const y = window.scrollY;
+  tb.style.transform = y>lastY&&y>80 ? 'translateY(-100%)':'translateY(0)';
+  tb.style.transition = 'transform 0.3s';
+  lastY = y;
+},{passive:true});
+</script>
+
+</body>
+</html>
