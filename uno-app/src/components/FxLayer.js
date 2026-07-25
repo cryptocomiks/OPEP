@@ -13,32 +13,57 @@ export default function FxLayer({ fx, onDone }) {
     case 'draw':
       return <FlyingCards n={Math.min(fx.n || 1, 4)} from={DECK} to={HAND} onDone={onDone} />;
     case 'plus':
-      return (
-        <Badge
-          label={fx.value === 'wild4' ? '+4' : '+2'}
-          sub={fx.toMe ? 'Tu pioches !' : 'Cartes !'}
-          bg={fx.value === 'wild4' ? '#141726' : '#E4342B'}
-          flyN={fx.toMe ? (fx.value === 'wild4' ? 4 : 2) : 0}
-          onDone={onDone}
-        />
-      );
+      if (fx.value === 'wild4') {
+        return <Badge label="+4" sub={fx.toMe ? 'Tu pioches !' : 'ça explose !'} bg="#141726" flyN={fx.toMe ? 4 : 0} explode onDone={onDone} />;
+      }
+      return <Badge label="+2" sub={fx.toMe ? 'Tu pioches !' : 'Cartes !'} bg="#E4342B" flyN={fx.toMe ? 2 : 0} onDone={onDone} />;
     case 'lock':
       return <Badge label="🔒" sub={fx.toMe ? 'Tu es bloqué !' : 'Bloqué !'} bg="#232a4d" onDone={onDone} />;
     case 'swap':
       return <Badge label="🔄" sub={fx.toMe ? 'On prend ta main !' : 'Échange de mains'} bg="#7a3fb0" crossing onDone={onDone} />;
     case 'renew':
-      return (
-        <Badge
-          label="♻️"
-          sub={fx.toMe ? 'Main toute neuve !' : 'Main renouvelée'}
-          bg="#1f7a4d"
-          flyN={fx.toMe ? Math.min(fx.n || 3, 4) : 0}
-          onDone={onDone}
-        />
-      );
+      return <Badge label="♻️" sub={fx.toMe ? 'Main toute neuve !' : 'Main renouvelée'} bg="#1f7a4d" flyN={fx.toMe ? Math.min(fx.n || 3, 4) : 0} onDone={onDone} />;
+    case 'flip':
+      return <Badge label="🔃" sub="Sens inversé !" bg="#0e6b8c" spin onDone={onDone} />;
+    case 'shield':
+      return <Badge label="🛡️" sub={fx.toMe ? 'Bouclier levé !' : 'Bouclier'} bg="#8a2f2f" onDone={onDone} />;
+    case 'shieldblock':
+      return <Badge label="🛡️" sub={fx.toMe ? 'Attaque bloquée !' : 'Bloqué par bouclier'} bg="#2f6a8a" onDone={onDone} />;
+    case 'spell':
+      return <Badge label="🔮" sub={fx.toMe ? 'Tu subis un Sort !' : 'Sort lancé'} bg="#5b2b8a" onDone={onDone} />;
+    case 'steal':
+      return <Badge label="🗡️" sub={fx.toMe ? 'On te vole une carte !' : 'Carte volée'} bg="#106b57" onDone={onDone} />;
+    case 'heal':
+      return <Badge label="🌟" sub="Purge !" bg="#1f5a8a" onDone={onDone} />;
     default:
       return null;
   }
+}
+
+function Explosion() {
+  const dirs = [
+    [-1, -1], [1, -1], [-1, 1], [1, 1], [0, -1.3], [0, 1.3], [-1.3, 0], [1.3, 0],
+  ];
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(v, { toValue: 1, duration: 620, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, []);
+  return (
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.centerFill]}>
+      {dirs.map(([dx, dy], i) => {
+        const tx = v.interpolate({ inputRange: [0, 1], outputRange: [0, dx * (W * 0.42)] });
+        const ty = v.interpolate({ inputRange: [0, 1], outputRange: [0, dy * (H * 0.28)] });
+        const rot = v.interpolate({ inputRange: [0, 1], outputRange: ['0deg', `${(i % 2 ? 1 : -1) * 220}deg`] });
+        const opacity = v.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 1, 0] });
+        const scale = v.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] });
+        return (
+          <Animated.View key={i} style={{ position: 'absolute', opacity, transform: [{ translateX: tx }, { translateY: ty }, { rotate: rot }, { scale }] }}>
+            <CardBack small />
+          </Animated.View>
+        );
+      })}
+    </View>
+  );
 }
 
 function FlyingCards({ n, from, to, onDone }) {
@@ -74,8 +99,8 @@ function FlyingCards({ n, from, to, onDone }) {
   );
 }
 
-// Generic centered badge with pop + shake; optional flying cards / crossing cards.
-function Badge({ label, sub, bg, flyN = 0, crossing, onDone }) {
+// Generic centered badge with pop + shake; optional flying / crossing / explosion.
+function Badge({ label, sub, bg, flyN = 0, crossing, explode, spin, onDone }) {
   const pop = useRef(new Animated.Value(0)).current;
   const shake = useRef(new Animated.Value(0)).current;
   const cross = useRef(new Animated.Value(0)).current;
@@ -95,9 +120,11 @@ function Badge({ label, sub, bg, flyN = 0, crossing, onDone }) {
   }, []);
 
   const scale = pop.interpolate({ inputRange: [0, 1], outputRange: [0.2, 1] });
+  const rotate = spin ? cross.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) : '0deg';
 
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.centerFill]}>
+      {explode ? <Explosion /> : null}
       {crossing ? (
         <View style={styles.crossWrap}>
           <Animated.View style={{ transform: [{ translateX: cross.interpolate({ inputRange: [0, 1], outputRange: [40, -40] }) }] }}>
@@ -108,7 +135,7 @@ function Badge({ label, sub, bg, flyN = 0, crossing, onDone }) {
           </Animated.View>
         </View>
       ) : null}
-      <Animated.View style={{ opacity: pop, transform: [{ scale }, { translateX: shake }] }}>
+      <Animated.View style={{ opacity: pop, transform: [{ scale }, { translateX: shake }, { rotate }] }}>
         <View style={[styles.badge, { backgroundColor: bg }]}>
           <Text style={styles.badgeText}>{label}</Text>
           <Text style={styles.badgeSub}>{sub}</Text>

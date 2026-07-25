@@ -40,4 +40,8 @@ export const LABELS = {
   wild4: '+4',
   swap: '🔄',
   renew: '♻️',
+  shield: '🛡️',
+  spell: '🔮',
+  steal: '🗡️',
+  heal: '🌟',
 };

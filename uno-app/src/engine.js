@@ -9,8 +9,10 @@ export const COLORS = ['red', 'yellow', 'green', 'blue'];
 //  swap  = échange ta main avec un joueur ciblé
 //  renew = un joueur ciblé jette toute sa main et pioche une main neuve
 
-export const WILD_TYPES = ['wild', 'wild4', 'swap', 'renew'];
-export const TARGETED = ['swap', 'renew']; // need a chosen target player
+// clan power cards: shield / spell / steal / heal
+export const WILD_TYPES = ['wild', 'wild4', 'swap', 'renew', 'shield', 'spell', 'steal', 'heal'];
+export const TARGETED = ['swap', 'renew', 'steal']; // need a chosen target player
+export const CLAN_CARDS = ['shield', 'spell', 'steal', 'heal'];
 
 export function isWildType(card) {
   return WILD_TYPES.includes(card.value);
@@ -69,7 +71,15 @@ function isColored(card) {
   return card.color !== null;
 }
 
-// Create a fresh game. players = [{ id, name }]
+// Signature power card for a clan (extra card seeded at game start).
+export function signatureCard(clanId, pid) {
+  const map = { guerrier: 'shield', ensorceleur: 'spell', voleur: 'steal', oracle: 'heal' };
+  const value = map[clanId];
+  if (!value) return null;
+  return { id: `sig_${pid}`, color: null, value };
+}
+
+// Create a fresh game. players = [{ id, name, clan? }]
 export function createGame(players, seed) {
   const rng = mulberry32(seed);
   let deck = shuffle(buildDeck(), rng);
@@ -80,6 +90,11 @@ export function createGame(players, seed) {
   for (let r = 0; r < 7; r++) {
     for (const p of players) hands[p.id].push(deck.pop());
   }
+  // clan bonus: one signature power card added to your starting hand
+  for (const p of players) {
+    const sig = signatureCard(p.clan, p.id);
+    if (sig) hands[p.id].push(sig);
+  }
 
   // flip first non-wild card as start of discard
   let first = deck.pop();
@@ -89,8 +104,11 @@ export function createGame(players, seed) {
   }
   const discard = [first];
 
+  const shields = {};
+  for (const p of players) shields[p.id] = 0;
+
   return {
-    players: players.map((p) => ({ id: p.id, name: p.name })),
+    players: players.map((p) => ({ id: p.id, name: p.name, clan: p.clan || null, skin: p.skin || 'classic' })),
     hands,
     drawPile: deck,
     discard,
@@ -100,6 +118,7 @@ export function createGame(players, seed) {
     currentColor: first.color,
     status: 'playing',
     winner: null,
+    shields,
     // when a player has drawn and may play the drawn card or pass:
     awaitingPlay: false,
     // event system: drives client-side animations reliably
@@ -112,6 +131,7 @@ export function createGame(players, seed) {
 
 // Official UNO scoring: number cards = face value, action cards = 20, wilds = 50.
 export function cardPoints(card) {
+  if (CLAN_CARDS.includes(card.value)) return 40;
   if (card.value === 'swap' || card.value === 'renew') return 40;
   if (card.value === 'wild' || card.value === 'wild4') return 50;
   if (card.value === 'skip' || card.value === 'reverse' || card.value === 'draw2') return 20;
@@ -186,11 +206,17 @@ function advance(state, steps = 1) {
   state.turnIndex = (state.turnIndex + state.direction * steps + n * steps) % n;
 }
 
+// True if an incoming attack on targetId is absorbed by a shield.
+function shielded(state, targetId) {
+  return state.shields && state.shields[targetId] > 0;
+}
+
 export function describe(card) {
   const colorFr = { red: 'Rouge', yellow: 'Jaune', green: 'Vert', blue: 'Bleu' };
   const valFr = {
     skip: 'Passe', reverse: 'Sens inverse', draw2: '+2', wild: 'Joker', wild4: '+4',
     swap: 'Échange', renew: 'Renouveau',
+    shield: 'Bouclier', spell: 'Sort', steal: 'Vol', heal: 'Purge',
   };
   const c = card.color ? colorFr[card.color] + ' ' : '';
   return c + (valFr[card.value] || card.value);
@@ -204,6 +230,11 @@ export function applyAction(state, action) {
   if (state.status !== 'playing') return { ok: false, error: 'Partie terminée', state };
   const pid = action.playerId;
   if (pid !== currentPlayerId(state)) return { ok: false, error: "Ce n'est pas ton tour", state };
+
+  // a shield ticks down at the start of its owner's turn (unless they already acted this turn)
+  if (!state.awaitingPlay && state.shields && state.shields[pid] > 0) {
+    state.shields[pid] -= 1;
+  }
 
   if (action.type === 'draw') {
     if (state.awaitingPlay) return { ok: false, error: 'Tu as déjà pioché', state };
@@ -280,18 +311,28 @@ export function applyAction(state, action) {
       case 'draw2': {
         advance(state, 1);
         const target = currentPlayerId(state);
-        drawN(state, target, 2);
-        state.log.push(`${nameOf(state, target)} pioche 2 cartes.`);
-        setEvent(state, { type: 'draw2', player: pid, target, n: 2 });
+        if (shielded(state, target)) {
+          state.log.push(`🛡️ ${nameOf(state, target)} bloque le +2 !`);
+          setEvent(state, { type: 'shield_block', player: pid, target, blocked: 'draw2' });
+        } else {
+          drawN(state, target, 2);
+          state.log.push(`${nameOf(state, target)} pioche 2 cartes.`);
+          setEvent(state, { type: 'draw2', player: pid, target, n: 2 });
+        }
         advance(state, 1);
         break;
       }
       case 'wild4': {
         advance(state, 1);
         const target = currentPlayerId(state);
-        drawN(state, target, 4);
-        state.log.push(`${nameOf(state, target)} pioche 4 cartes.`);
-        setEvent(state, { type: 'wild4', player: pid, target, n: 4 });
+        if (shielded(state, target)) {
+          state.log.push(`🛡️ ${nameOf(state, target)} bloque le +4 !`);
+          setEvent(state, { type: 'shield_block', player: pid, target, blocked: 'wild4' });
+        } else {
+          drawN(state, target, 4);
+          state.log.push(`${nameOf(state, target)} pioche 4 cartes.`);
+          setEvent(state, { type: 'wild4', player: pid, target, n: 4 });
+        }
         advance(state, 1);
         break;
       }
@@ -320,6 +361,66 @@ export function applyAction(state, action) {
         advance(state, 1);
         break;
       }
+      case 'shield': {
+        state.shields[pid] = 5;
+        state.log.push(`🛡️ ${nameOf(state, pid)} lève un Bouclier (5 tours) !`);
+        setEvent(state, { type: 'shield', player: pid });
+        advance(state, 1);
+        break;
+      }
+      case 'spell': {
+        for (const oid of state.order) {
+          if (oid !== pid) {
+            if (shielded(state, oid)) {
+              state.log.push(`🛡️ ${nameOf(state, oid)} résiste au Sort.`);
+            } else {
+              drawN(state, oid, 1);
+            }
+          }
+        }
+        state.log.push(`🔮 Sort de ${nameOf(state, pid)} : les adversaires piochent 1.`);
+        setEvent(state, { type: 'spell', player: pid });
+        advance(state, 1);
+        break;
+      }
+      case 'steal': {
+        const target = action.target;
+        if (shielded(state, target)) {
+          state.log.push(`🛡️ ${nameOf(state, target)} bloque le Vol !`);
+          setEvent(state, { type: 'shield_block', player: pid, target, blocked: 'steal' });
+        } else if (state.hands[target] && state.hands[target].length) {
+          const stolen = state.hands[target].pop();
+          state.hands[pid].push(stolen);
+          state.log.push(`🗡️ ${nameOf(state, pid)} vole une carte à ${nameOf(state, target)} !`);
+          setEvent(state, { type: 'steal', player: pid, target });
+        } else {
+          setEvent(state, { type: 'steal', player: pid, target });
+        }
+        advance(state, 1);
+        break;
+      }
+      case 'heal': {
+        // discard your 2 heaviest cards to the bottom of the draw pile
+        const h = state.hands[pid];
+        h.sort((a, b) => cardPoints(b) - cardPoints(a));
+        const dumped = h.splice(0, Math.min(2, h.length));
+        state.drawPile = dumped
+          .map((c) => (isWildType(c) ? { ...c, color: null } : c))
+          .concat(state.drawPile);
+        state.log.push(`🌟 ${nameOf(state, pid)} purge ${dumped.length} carte(s).`);
+        setEvent(state, { type: 'heal', player: pid, n: dumped.length });
+        // win check after purge
+        if (h.length === 0) {
+          state.status = 'finished';
+          state.winner = pid;
+          state.reward = roundReward(state, pid);
+          state.log.push(`🏆 ${nameOf(state, pid)} gagne la manche ! +${state.reward}$`);
+          setEvent(state, { type: 'win', player: pid, reward: state.reward });
+          return { ok: true, state };
+        }
+        advance(state, 1);
+        break;
+      }
       case 'wild':
         setEvent(state, { type: 'wild', player: pid, color: action.color });
         advance(state, 1);
@@ -345,6 +446,9 @@ export function publicView(state, viewerId) {
     players: state.players.map((p) => ({
       id: p.id,
       name: p.name,
+      clan: p.clan || null,
+      skin: p.skin || 'classic',
+      shield: state.shields ? state.shields[p.id] || 0 : 0,
       count: state.hands[p.id] ? state.hands[p.id].length : 0,
     })),
     order: state.order,

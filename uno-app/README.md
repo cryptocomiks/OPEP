@@ -37,6 +37,16 @@ Puis :
   (sauvegardé sur l'appareil), compteur animé sur l'écran de victoire.
 - **Boutons Quitter** partout (avec confirmation).
 
+## 🏆 Progression & méta
+
+- **Mystery Box** : skin aléatoire pas cher, doublons → 💎 éclats → craft d'un skin choisi.
+- **Skins visibles par tous** : en partie tu vois le dos (sleeve) de chaque joueur.
+- **Battle pass saisonnier** (gratuit + premium) : 15 paliers, récompenses cash/éclats/boîtes/skins.
+- **Missions** quotidiennes & hebdo (gagne, joue un +4, bloque une attaque…).
+- **Clans (4)** : Guerrier 🛡️ (bouclier 5 tours), Ensorceleur 🔮 (sort), Voleur 🗡️ (vol), Oracle 🌟 (purge). Carte-pouvoir signature en main + blason sur ton chip.
+- **Chat écrit** en salon et en partie (multijoueur).
+- **Nouveaux effets** : +4 fait exploser des cartes sur le tapis, le sens inverse fait tourner le paquet, badges bouclier/sort/vol.
+
 ## 🃏 Cartes spéciales & extras
 
 - **🔄 Échange** : échange toute ta main avec un joueur ciblé.
