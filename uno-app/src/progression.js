@@ -95,6 +95,9 @@ function defaults() {
     shards: 0,
     boxes: 0,
     clan: null,
+    rating: 1000,
+    wins: 0,
+    losses: 0,
     missions: { dayKey: dk, weekKey: wk, items: generateMissions(dk, wk) },
   };
 }

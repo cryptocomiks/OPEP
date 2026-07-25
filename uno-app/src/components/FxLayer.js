@@ -11,12 +11,12 @@ export default function FxLayer({ fx, onDone }) {
   if (!fx) return null;
   switch (fx.type) {
     case 'draw':
-      return <FlyingCards n={Math.min(fx.n || 1, 4)} from={DECK} to={HAND} onDone={onDone} />;
+      return <DrawFx n={Math.min(fx.n || 1, 4)} onDone={onDone} />;
     case 'plus':
       if (fx.value === 'wild4') {
-        return <Badge label="+4" sub={fx.toMe ? 'Tu pioches !' : 'ça explose !'} bg="#141726" flyN={fx.toMe ? 4 : 0} explode onDone={onDone} />;
+        return <Badge label="+4" sub={fx.toMe ? 'Tu pioches !' : 'ça explose !'} bg="#141726" flyN={fx.toMe ? 4 : 0} explode slash onDone={onDone} />;
       }
-      return <Badge label="+2" sub={fx.toMe ? 'Tu pioches !' : 'Cartes !'} bg="#E4342B" flyN={fx.toMe ? 2 : 0} onDone={onDone} />;
+      return <Badge label="+2" sub={fx.toMe ? 'Tu pioches !' : 'Cartes !'} bg="#E4342B" flyN={fx.toMe ? 2 : 0} slash onDone={onDone} />;
     case 'lock':
       return <Badge label="🔒" sub={fx.toMe ? 'Tu es bloqué !' : 'Bloqué !'} bg="#232a4d" onDone={onDone} />;
     case 'swap':
@@ -28,16 +28,57 @@ export default function FxLayer({ fx, onDone }) {
     case 'shield':
       return <Badge label="🛡️" sub={fx.toMe ? 'Bouclier levé !' : 'Bouclier'} bg="#8a2f2f" onDone={onDone} />;
     case 'shieldblock':
-      return <Badge label="🛡️" sub={fx.toMe ? 'Attaque bloquée !' : 'Bloqué par bouclier'} bg="#2f6a8a" onDone={onDone} />;
+      return <Badge label="🛡️" sub={fx.toMe ? 'Attaque bloquée !' : 'Bloqué par bouclier'} bg="#2f6a8a" slash onDone={onDone} />;
     case 'spell':
       return <Badge label="🔮" sub={fx.toMe ? 'Tu subis un Sort !' : 'Sort lancé'} bg="#5b2b8a" onDone={onDone} />;
     case 'steal':
-      return <Badge label="🗡️" sub={fx.toMe ? 'On te vole une carte !' : 'Carte volée'} bg="#106b57" onDone={onDone} />;
+      return <Badge label="🗡️" sub={fx.toMe ? 'On te vole une carte !' : 'Carte volée'} bg="#106b57" slash onDone={onDone} />;
     case 'heal':
       return <Badge label="🌟" sub="Purge !" bg="#1f5a8a" onDone={onDone} />;
+    case 'rankup':
+      return <Badge label={fx.icon || '⭐'} sub={`RANG SUPÉRIEUR · ${fx.rank || ''}`} bg={fx.color || '#b45cff'} onDone={onDone} />;
     default:
       return null;
   }
+}
+
+// Draw effect: flying cards + a "PIOCHE +N" tag near the hand.
+function DrawFx({ n, onDone }) {
+  const a = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(a, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.delay(500),
+      Animated.timing(a, { toValue: 0, duration: 250, useNativeDriver: true }),
+    ]).start();
+  }, []);
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <FlyingCards n={n} from={DECK} to={HAND} onDone={onDone} />
+      <View style={styles.drawTagWrap}>
+        <Animated.View style={[styles.drawTag, { opacity: a, transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }]}>
+          <Text style={styles.drawTagText}>PIOCHE +{n}</Text>
+        </Animated.View>
+      </View>
+    </View>
+  );
+}
+
+// Combat slash: red flash + two diagonal streaks sweeping across.
+function Slash() {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(v, { toValue: 1, duration: 380, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, []);
+  const flash = v.interpolate({ inputRange: [0, 0.15, 0.5], outputRange: [0, 0.5, 0], extrapolate: 'clamp' });
+  const tx = v.interpolate({ inputRange: [0, 1], outputRange: [-W, W] });
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#ff2d2d', opacity: flash }]} />
+      <Animated.View style={[styles.streak, { transform: [{ translateX: tx }, { rotate: '18deg' }] }]} />
+      <Animated.View style={[styles.streak, { top: '58%', transform: [{ translateX: tx }, { rotate: '-14deg' }] }]} />
+    </View>
+  );
 }
 
 function Explosion() {
@@ -99,8 +140,8 @@ function FlyingCards({ n, from, to, onDone }) {
   );
 }
 
-// Generic centered badge with pop + shake; optional flying / crossing / explosion.
-function Badge({ label, sub, bg, flyN = 0, crossing, explode, spin, onDone }) {
+// Generic centered badge with pop + shake; optional flying / crossing / explosion / slash.
+function Badge({ label, sub, bg, flyN = 0, crossing, explode, spin, slash, onDone }) {
   const pop = useRef(new Animated.Value(0)).current;
   const shake = useRef(new Animated.Value(0)).current;
   const cross = useRef(new Animated.Value(0)).current;
@@ -124,6 +165,7 @@ function Badge({ label, sub, bg, flyN = 0, crossing, explode, spin, onDone }) {
 
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.centerFill]}>
+      {slash ? <Slash /> : null}
       {explode ? <Explosion /> : null}
       {crossing ? (
         <View style={styles.crossWrap}>
@@ -164,4 +206,8 @@ const styles = StyleSheet.create({
   },
   badgeText: { color: '#F5C518', fontSize: 60, fontWeight: '900', fontStyle: 'italic' },
   badgeSub: { color: '#fff', fontSize: 16, fontWeight: '800', marginTop: 2 },
+  drawTagWrap: { position: 'absolute', bottom: H * 0.24, left: 0, right: 0, alignItems: 'center' },
+  drawTag: { backgroundColor: 'rgba(0,0,0,0.8)', borderColor: '#5ad1ff', borderWidth: 1.5, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 6 },
+  drawTagText: { color: '#8be9ff', fontWeight: '900', fontSize: 14, textAlign: 'center' },
+  streak: { position: 'absolute', top: '30%', width: W * 1.4, height: 6, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 3 },
 });

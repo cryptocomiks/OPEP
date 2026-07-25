@@ -8,10 +8,14 @@
     "backgroundColor": "#0f1226",
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Le chat vocal en partie utilise le micro pour envoyer de courtes notes vocales."
+      }
     },
     "android": {
-      "package": "com.uno.expo"
+      "package": "com.uno.expo",
+      "permissions": ["RECORD_AUDIO"]
     },
     "web": {
       "bundler": "metro"

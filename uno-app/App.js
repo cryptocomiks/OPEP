@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   SafeAreaView, View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet,
-  StatusBar, Platform, KeyboardAvoidingView, Animated, Easing, Alert,
+  StatusBar, Platform, KeyboardAvoidingView, Animated, Easing, Alert, Pressable,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -17,6 +17,10 @@ import ProgressionScreen from './src/components/ProgressionScreen';
 import ClanScreen from './src/components/ClanScreen';
 import ChatPanel from './src/components/ChatPanel';
 import BoxOpen from './src/components/BoxOpen';
+import ChatBubbles from './src/components/ChatBubbles';
+import { initSfx, play as playSfx, isMuted, setMuted } from './src/sfx';
+import { startRecording, stopRecording, playBase64 } from './src/voice';
+import { rankFromRating, ratingDelta } from './src/ranking';
 import { CARD_COLORS, theme, GRAD } from './src/theme';
 import { createGame, applyAction, publicView, canPlay, COLORS, isWildType, TARGETED } from './src/engine';
 import { botAction } from './src/bots';
@@ -68,6 +72,9 @@ export default function App() {
   const [boxResult, setBoxResult] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
+  const [muted, setMutedState] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [voiceTalker, setVoiceTalker] = useState(null);
 
   const meRef = useRef({ id: makeId(), name });
   const clientRef = useRef(null);
@@ -82,6 +89,8 @@ export default function App() {
   const equippedRef = useRef('classic');
   const ownedRef = useRef(['classic']);
   const progRef = useRef(null);
+  const recordingRef = useRef(false);
+  const recTimerRef = useRef(null);
 
   useEffect(() => { meRef.current.name = name; }, [name]);
   useEffect(() => { equippedRef.current = equipped; }, [equipped]);
@@ -92,7 +101,15 @@ export default function App() {
     getOwned().then(setOwned);
     getEquipped().then(setEquip);
     loadProg().then((p) => { setProg(p); progRef.current = p; });
+    initSfx().then(() => setMutedState(isMuted()));
   }, []);
+
+  const toggleMute = useCallback(() => {
+    const nv = !muted;
+    setMutedState(nv);
+    setMuted(nv);
+    if (!nv) playSfx('tap');
+  }, [muted]);
 
   const flash = useCallback((msg) => {
     setToast(msg);
@@ -121,7 +138,7 @@ export default function App() {
   }, []);
   useEffect(() => () => cleanup(), [cleanup]);
 
-  const myEntry = () => ({ id: meRef.current.id, name: meRef.current.name, skin: equippedRef.current, clan: progRef.current ? progRef.current.clan : null });
+  const myEntry = () => ({ id: meRef.current.id, name: meRef.current.name, skin: equippedRef.current, clan: progRef.current ? progRef.current.clan : null, rating: progRef.current ? progRef.current.rating : 1000 });
 
   // ---------- skins / market ----------
   const buySkin = useCallback((skin) => {
@@ -260,6 +277,12 @@ export default function App() {
 
   // ---------- multi client factory ----------
   const attachChat = (data) => setChatMessages((prev) => [...prev, data].slice(-60));
+  const handleVoice = (data) => {
+    if (!data || data.pid === meRef.current.id) return;
+    setVoiceTalker(data.name);
+    playBase64(data.b64);
+    setTimeout(() => setVoiceTalker((t) => (t === data.name ? null : t)), 3500);
+  };
 
   // ---------- HOST ----------
   const hostGame = useCallback(() => {
@@ -272,6 +295,7 @@ export default function App() {
     const client = new GameClient(newCode, {
       onStatus: (s) => setStatus(s),
       onChat: attachChat,
+      onVoice: handleVoice,
       onJoin: (player) => {
         const lob = lobbyRef.current;
         if (lob.started || !player || !player.id) return;
@@ -328,6 +352,7 @@ export default function App() {
     const client = new GameClient(c, {
       onStatus: (s) => setStatus(s),
       onChat: attachChat,
+      onVoice: handleVoice,
       onLobby: (lob) => {
         lobbyRef.current = lob; setLobby(lob);
         if (!lob.players.find((p) => p.id === me.id) && !lob.started) client.sendJoin(me);
@@ -355,6 +380,23 @@ export default function App() {
     clientRef.current.sendChat({ id: `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, pid: meRef.current.id, name: meRef.current.name, clan: progRef.current ? progRef.current.clan : null, text });
   }, []);
 
+  const stopTalk = useCallback(async () => {
+    if (!recordingRef.current) return;
+    recordingRef.current = false; setRecording(false);
+    if (recTimerRef.current) { clearTimeout(recTimerRef.current); recTimerRef.current = null; }
+    const b64 = await stopRecording();
+    if (b64 && clientRef.current) clientRef.current.sendVoice({ pid: meRef.current.id, name: meRef.current.name, b64 });
+  }, []);
+
+  const startTalk = useCallback(async () => {
+    if (recordingRef.current) return;
+    const ok = await startRecording();
+    if (!ok) { flash('Micro indisponible (permission ?).'); return; }
+    recordingRef.current = true; setRecording(true);
+    haptic('light');
+    recTimerRef.current = setTimeout(() => { stopTalk(); }, 8000);
+  }, [flash, stopTalk]);
+
   const send = useCallback((action) => {
     if (modeRef.current === 'solo') applyLocal(action);
     else if (clientRef.current) clientRef.current.sendAction(action);
@@ -378,17 +420,19 @@ export default function App() {
       const ev = v.lastEvent;
       if (v.status === 'playing') {
         switch (ev.type) {
-          case 'draw2': case 'wild4': triggerFx({ type: 'plus', value: ev.type, toMe: ev.target === meId }); haptic('heavy'); break;
-          case 'skip': triggerFx({ type: 'lock', toMe: ev.target === meId }); haptic('heavy'); break;
-          case 'reverse': triggerFx({ type: 'flip' }); haptic('light'); break;
-          case 'swap': triggerFx({ type: 'swap', toMe: ev.target === meId }); haptic('heavy'); break;
-          case 'renew': triggerFx({ type: 'renew', n: ev.n, toMe: ev.target === meId }); haptic('heavy'); break;
-          case 'shield': triggerFx({ type: 'shield', toMe: ev.player === meId }); haptic('heavy'); break;
-          case 'shield_block': triggerFx({ type: 'shieldblock', toMe: ev.target === meId }); haptic('heavy'); break;
-          case 'spell': triggerFx({ type: 'spell', toMe: ev.player !== meId }); haptic('heavy'); break;
-          case 'steal': triggerFx({ type: 'steal', toMe: ev.target === meId }); haptic('heavy'); break;
-          case 'heal': triggerFx({ type: 'heal' }); haptic('light'); break;
-          case 'draw': if (ev.player === meId) { triggerFx({ type: 'draw', n: ev.n }); haptic('light'); } break;
+          case 'draw2': triggerFx({ type: 'plus', value: ev.type, toMe: ev.target === meId }); haptic('heavy'); playSfx('plus'); break;
+          case 'wild4': triggerFx({ type: 'plus', value: ev.type, toMe: ev.target === meId }); haptic('heavy'); playSfx('explode'); break;
+          case 'skip': triggerFx({ type: 'lock', toMe: ev.target === meId }); haptic('heavy'); playSfx('tap'); break;
+          case 'reverse': triggerFx({ type: 'flip' }); haptic('light'); playSfx('swap'); break;
+          case 'swap': triggerFx({ type: 'swap', toMe: ev.target === meId }); haptic('heavy'); playSfx('swap'); break;
+          case 'renew': triggerFx({ type: 'renew', n: ev.n, toMe: ev.target === meId }); haptic('heavy'); playSfx('draw'); break;
+          case 'shield': triggerFx({ type: 'shield', toMe: ev.player === meId }); haptic('heavy'); playSfx('shield'); break;
+          case 'shield_block': triggerFx({ type: 'shieldblock', toMe: ev.target === meId }); haptic('heavy'); playSfx('shield'); break;
+          case 'spell': triggerFx({ type: 'spell', toMe: ev.player !== meId }); haptic('heavy'); playSfx('swap'); break;
+          case 'steal': triggerFx({ type: 'steal', toMe: ev.target === meId }); haptic('heavy'); playSfx('steal'); break;
+          case 'heal': triggerFx({ type: 'heal' }); haptic('light'); playSfx('turn'); break;
+          case 'draw': if (ev.player === meId) { triggerFx({ type: 'draw', n: ev.n }); haptic('light'); playSfx('draw'); } break;
+          case 'wild': case 'play': if (ev.player !== meId) playSfx('play'); break;
           default: break;
         }
       }
@@ -405,14 +449,27 @@ export default function App() {
     if (v.status === 'finished' && !prev.finished) {
       let credited = 0;
       const won = v.winner === meId;
-      if (won && !rewardAppliedRef.current) { rewardAppliedRef.current = true; credited += v.reward; haptic('success'); }
+      if (won && !rewardAppliedRef.current) { rewardAppliedRef.current = true; credited += v.reward; haptic('success'); playSfx('win'); }
       else haptic('light');
       const b = betRef.current;
       if (b && b.on === v.winner) { credited += b.amount * b.odds; flash(`🎉 Pari gagné : +${b.amount * b.odds}$ !`); }
       betRef.current = null; setBet(null);
       if (credited > 0) addBalance(credited).then(setBalance); else getBalance().then(setBalance);
+
+      // ranking update
+      const opps = v.players.filter((p) => p.id !== meId);
+      const avgOpp = opps.length ? Math.round(opps.reduce((a, p) => a + (p.rating || 1000), 0) / opps.length) : 1000;
       updateProg((p) => {
         p.xp += won ? 30 : 10;
+        const before = rankFromRating(p.rating || 1000).name;
+        const d = ratingDelta(won, p.rating || 1000, avgOpp, opps.length);
+        p.rating = Math.max(0, (p.rating || 1000) + d);
+        if (won) p.wins = (p.wins || 0) + 1; else p.losses = (p.losses || 0) + 1;
+        const after = rankFromRating(p.rating);
+        if (after.name !== before && p.rating > (p.rating - d)) {
+          setTimeout(() => triggerFx({ type: 'rankup', icon: after.icon, rank: after.name, color: after.color }), 1400);
+        }
+        flash(`${won ? 'Victoire' : 'Défaite'} · ${d >= 0 ? '+' : ''}${d} pts (${rankFromRating(p.rating).name})`);
         if (won) {
           recordEvent(p, { type: 'win', amount: 1 });
           if (modeRef.current === 'solo') recordEvent(p, { type: 'win_solo', amount: 1 });
@@ -425,7 +482,7 @@ export default function App() {
   }, [gameState, triggerFx, flash, recordMission, updateProg]);
 
   useEffect(() => {
-    if (myTurn && !prevTurnRef.current) haptic('light');
+    if (myTurn && !prevTurnRef.current) { haptic('light'); playSfx('turn'); }
     prevTurnRef.current = myTurn;
   }, [myTurn]);
 
@@ -446,7 +503,7 @@ export default function App() {
   const onPlayCard = useCallback((card) => {
     if (!myTurn) { flash("Ce n'est pas ton tour."); return; }
     if (!canPlay(card, stateRef.current)) { flash('Carte non jouable.'); return; }
-    haptic('light');
+    haptic('light'); playSfx('play');
     if (isWildType(card)) { setPendingCard({ cardId: card.id, value: card.value }); return; }
     send({ type: 'play', playerId: meRef.current.id, cardId: card.id });
   }, [myTurn, send, flash]);
@@ -477,6 +534,7 @@ export default function App() {
               onHost={hostGame} onJoin={joinGame} onSolo={startSolo}
               onMarket={() => setScreen('market')} onPass={() => setScreen('progress')} onClan={() => setScreen('clan')}
               bots={bots} setBots={setBots} balance={balance} clanId={clanId} prog={prog}
+              muted={muted} onMute={toggleMute}
             />
           )}
 
@@ -523,6 +581,19 @@ export default function App() {
             />
           )}
 
+          {screen === 'game' && mode === 'multi' && (
+            <>
+              <ChatBubbles messages={chatMessages} meId={meRef.current.id} />
+              {voiceTalker ? (
+                <View style={styles.voiceInd} pointerEvents="none"><Text style={styles.voiceIndText}>🎤 {voiceTalker} parle…</Text></View>
+              ) : null}
+              <Pressable onPressIn={startTalk} onPressOut={stopTalk} style={[styles.micBtn, recording && styles.micBtnOn]}>
+                <Text style={styles.micIcon}>🎤</Text>
+                {recording ? <Text style={styles.micRec}>REC</Text> : null}
+              </Pressable>
+            </>
+          )}
+
           {fx && <FxLayer key={fxKey} fx={fx} onDone={() => setFx(null)} />}
           {pendingCard && <ColorPicker onPick={chooseColor} onCancel={() => setPendingCard(null)} />}
           {targetPick && view && (
@@ -548,15 +619,25 @@ export default function App() {
 }
 
 // ---------------- Home ----------------
-function HomeScreen({ name, setName, codeInput, setCodeInput, onHost, onJoin, onSolo, onMarket, onPass, onClan, bots, setBots, balance, clanId, prog }) {
+function HomeScreen({ name, setName, codeInput, setCodeInput, onHost, onJoin, onSolo, onMarket, onPass, onClan, bots, setBots, balance, clanId, prog, muted, onMute }) {
   const clan = getClan(clanId);
   const li = prog ? levelInfo(prog.xp) : { tier: 0 };
+  const rank = rankFromRating(prog ? prog.rating : 1000);
   return (
     <LinearGradient colors={GRAD.home} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.home}>
         <View style={styles.topRow}>
+          <TouchableOpacity style={styles.walletChip} onPress={onMute}><Text style={styles.walletText}>{muted ? '🔇' : '🔊'}</Text></TouchableOpacity>
           <View style={styles.walletChip}><Text style={styles.walletText}>💰 {balance}$</Text></View>
           <View style={styles.walletChip}><Text style={styles.walletText}>💎 {prog ? prog.shards : 0}</Text></View>
+        </View>
+
+        <View style={[styles.rankBanner, { borderColor: rank.color }]}>
+          <Text style={styles.rankIcon}>{rank.icon}</Text>
+          <View>
+            <Text style={[styles.rankName, { color: rank.color }]}>{rank.name}</Text>
+            <Text style={styles.rankPts}>{prog ? prog.rating : 1000} pts · {prog ? prog.wins || 0 : 0}V / {prog ? prog.losses || 0 : 0}D</Text>
+          </View>
         </View>
 
         <View style={styles.navRow}>
@@ -619,7 +700,7 @@ function LobbyScreen({ code, role, status, lobby, meId, bet, onStart, onLeave, o
             return (
               <View key={p.id} style={styles.playerRow}>
                 <View style={styles.avatar}><Text style={styles.avatarText}>{(p.name || '?').slice(0, 1).toUpperCase()}</Text></View>
-                <Text style={styles.playerName}>{clan ? clan.icon + ' ' : ''}{p.name}</Text>
+                <Text style={styles.playerName}>{rankFromRating(p.rating || 1000).icon} {clan ? clan.icon + ' ' : ''}{p.name}</Text>
                 {p.id === lobby.hostId ? <Text style={styles.hostTag}>hôte</Text> : null}
                 {p.id === meId ? <Text style={styles.youTag}>toi</Text> : null}
               </View>
@@ -669,7 +750,7 @@ function GameScreen({ view, meId, myTurn, mode, status, bet, onPlay, onDraw, onP
             const clan = getClan(p.clan);
             return (
               <View key={p.id} style={[styles.oppChip, active && styles.oppActive]}>
-                <Text style={styles.oppName} numberOfLines={1}>{clan ? clan.icon + ' ' : ''}{p.name}</Text>
+                <Text style={styles.oppName} numberOfLines={1}>{rankFromRating(p.rating).icon} {clan ? clan.icon + ' ' : ''}{p.name}</Text>
                 <View style={styles.oppCards}>
                   <CardBack small skin={p.skin} />
                   <Text style={styles.oppCount}>×{p.count}</Text>
@@ -793,6 +874,10 @@ const styles = StyleSheet.create({
   topRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   walletChip: { backgroundColor: 'rgba(245,197,24,0.14)', borderColor: theme.accent, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
   walletText: { color: theme.accent, fontWeight: '900', fontSize: 14 },
+  rankBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, alignSelf: 'center', marginTop: 12, backgroundColor: theme.panel, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 10, borderWidth: 2 },
+  rankIcon: { fontSize: 30 },
+  rankName: { fontWeight: '900', fontSize: 18 },
+  rankPts: { color: theme.sub, fontSize: 12, marginTop: 1 },
   navRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
   navBtn: { flex: 1, backgroundColor: theme.panel, borderColor: theme.border, borderWidth: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center' },
   navText: { color: theme.text, fontWeight: '800', fontSize: 12 },
@@ -893,4 +978,10 @@ const styles = StyleSheet.create({
 
   toast: { position: 'absolute', bottom: 40, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 12, maxWidth: '90%' },
   toastText: { color: '#fff', fontWeight: '600' },
+  micBtn: { position: 'absolute', right: 16, bottom: 200, width: 58, height: 58, borderRadius: 29, backgroundColor: '#2277CC', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff', zIndex: 25, elevation: 8, shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 6 },
+  micBtnOn: { backgroundColor: '#E4342B', transform: [{ scale: 1.12 }] },
+  micIcon: { fontSize: 24 },
+  micRec: { color: '#fff', fontSize: 8, fontWeight: '900' },
+  voiceInd: { position: 'absolute', top: 70, alignSelf: 'center', backgroundColor: 'rgba(34,119,204,0.9)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, zIndex: 25 },
+  voiceIndText: { color: '#fff', fontWeight: '800' },
 });

@@ -37,6 +37,14 @@ Puis :
   (sauvegardé sur l'appareil), compteur animé sur l'écran de victoire.
 - **Boutons Quitter** partout (avec confirmation).
 
+## 🔊 Son, voix & rang
+
+- **Design sonore** : effets pour chaque carte/action (pose, pioche, +2/+4, bouclier, échange, vol, victoire) + son « à toi ». Bouton 🔊/🔇 sur l'accueil.
+- **Chat en direct en partie** : les messages apparaissent en bulles flottantes pendant la partie (pas seulement dans le panneau).
+- **Chat vocal (push-to-talk)** : maintiens le 🎤 pour enregistrer une note vocale, relâche pour l'envoyer aux autres joueurs (Expo Go n'a pas de WebRTC → notes vocales courtes plutôt que live).
+- **Classement ELO** : rating + paliers (Bois → Champion), rang affiché sur toi et tes adversaires, gains/pertes de points, animation de montée de rang.
+- **Animations de combat** : slash + flash rouge sur les attaques, badge de pioche.
+
 ## 🏆 Progression & méta
 
 - **Mystery Box** : skin aléatoire pas cher, doublons → 💎 éclats → craft d'un skin choisi.
