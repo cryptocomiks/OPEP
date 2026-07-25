@@ -51,9 +51,10 @@ body::after{
 .tagline{text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--brown3);text-transform:uppercase;margin-bottom:14px;opacity:.85}
 
 /* ═════ SEGMENTED NAV ═════ */
-.tabs{display:flex;background:var(--brown);border-radius:16px;padding:5px;gap:4px;box-shadow:inset 0 2px 6px rgba(0,0,0,.35),0 4px 12px var(--shadow);margin-bottom:16px}
-.tab{flex:1;border:none;background:transparent;color:#C7B39C;font-family:var(--fun);font-weight:600;font-size:14px;padding:11px 8px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s;position:relative}
-.tab .cnt{font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.14);padding:1px 7px;border-radius:20px}
+.tabs{display:flex;background:var(--brown);border-radius:16px;padding:5px;gap:3px;box-shadow:inset 0 2px 6px rgba(0,0,0,.35),0 4px 12px var(--shadow);margin-bottom:16px}
+.tab{flex:1;border:none;background:transparent;color:#C7B39C;font-family:var(--fun);font-weight:600;font-size:16px;padding:8px 4px;border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:.2s;position:relative}
+.tab .lbl{font-size:11px;letter-spacing:.2px}
+.tab .cnt{position:absolute;top:3px;right:8px;font-family:var(--mono);font-size:9px;background:rgba(255,255,255,.16);padding:0 5px;border-radius:20px;line-height:15px}
 .tab.on{background:linear-gradient(180deg,var(--coral),var(--coral-d));color:#fff;box-shadow:0 3px 8px rgba(200,68,42,.5)}
 .tab.on .cnt{background:rgba(0,0,0,.2)}
 
@@ -85,7 +86,7 @@ body::after{
   box-shadow:inset 0 0 0 3px #6b5645, inset 0 0 40px rgba(0,0,0,.7);
 }
 .screen video,.screen img,.screen canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.screen video{transform:scaleX(-1)}
+.screen video.mirror{transform:scaleX(-1)}
 .scanlines{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(255,255,255,.04) 0 1px,transparent 1px 3px);z-index:3}
 .vignette{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 70px 12px rgba(0,0,0,.55);z-index:3}
 
@@ -216,6 +217,86 @@ body::after{
 
 .foot{text-align:center;font-family:var(--mono);font-size:10px;color:var(--brown3);letter-spacing:1px;margin-top:22px;opacity:.7}
 
+/* ═════ PERSO / AVATAR ═════ */
+.perso-card{background:var(--paper);border-radius:20px;padding:14px;box-shadow:0 10px 24px var(--shadow);margin-bottom:14px}
+.perso-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.lvl-badge{width:48px;height:48px;flex:0 0 48px;border-radius:14px;background:linear-gradient(180deg,var(--mustard),#cf9021);color:#3a2413;font-family:var(--fun);font-weight:700;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(207,144,33,.4);position:relative}
+.lvl-badge::after{content:"LVL";position:absolute;top:2px;left:0;right:0;text-align:center;font-family:var(--mono);font-size:7px;letter-spacing:1px;opacity:.7}
+.perso-meta{flex:1;min-width:0}
+.perso-name{font-weight:600;font-size:16px;color:var(--brown)}
+.xpwrap{display:flex;align-items:center;gap:8px;margin-top:5px}
+.xpbar{flex:1;height:9px;background:rgba(42,33,28,.12);border-radius:20px;overflow:hidden}
+.xpbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--coral),var(--mustard));border-radius:20px;transition:width .6s cubic-bezier(.3,1.2,.4,1)}
+.xptxt{font-family:var(--mono);font-size:10px;color:var(--brown3)}
+.perso-pairs{text-align:center;line-height:1.1}
+.perso-pairs b{font-size:20px;color:var(--coral);font-weight:700}
+.perso-pairs small{display:block;font-family:var(--mono);font-size:9px;color:var(--brown3);text-transform:uppercase}
+.avatar-stage{border-radius:16px;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;aspect-ratio:1/1.05;box-shadow:inset 0 2px 12px rgba(0,0,0,.12)}
+.avatar-stage svg{width:100%;height:100%;display:block}
+.worn-line{text-align:center;font-size:12px;color:var(--brown3);margin-top:10px;font-weight:500}
+.worn-line b{color:var(--brown)}
+
+.customizer{background:var(--paper);border-radius:20px;padding:16px;box-shadow:0 10px 24px var(--shadow)}
+.opt-group{margin-bottom:16px}
+.opt-group h4{font-size:13px;color:var(--brown2);margin-bottom:9px;font-weight:600}
+.swatches{display:flex;gap:9px;flex-wrap:wrap}
+.swatch{width:34px;height:34px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.18);cursor:pointer;transition:.15s}
+.swatch:active{transform:scale(.9)}
+.swatch.on{outline:3px solid var(--coral);outline-offset:1px;transform:scale(1.08)}
+.styles{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.style-btn{border:1.5px solid rgba(42,33,28,.18);background:#fff;color:var(--brown2);font-family:var(--fun);font-weight:500;font-size:12px;padding:7px 12px;border-radius:20px;cursor:pointer;transition:.15s}
+.style-btn.on{background:var(--brown);color:#f6ecd9;border-color:var(--brown)}
+.pair-picker{display:flex;gap:9px;overflow-x:auto;padding:2px 2px 8px}
+.pair-picker::-webkit-scrollbar{height:4px}
+.pp-item{flex:0 0 62px;width:62px;height:62px;border-radius:12px;background:#fff;border:3px solid #fff;box-shadow:0 3px 7px rgba(0,0,0,.16);cursor:pointer;overflow:hidden;transition:.15s}
+.pp-item img{width:100%;height:100%;object-fit:contain}
+.pp-item.on{outline:3px solid var(--coral);outline-offset:1px}
+.pp-item.none{display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--brown3)}
+.pp-empty{font-size:12px;color:var(--brown3);padding:6px 2px}
+.share-av{width:100%;margin-top:4px;background:linear-gradient(180deg,var(--teal),var(--teal-d));color:#fff;border:none;font-family:var(--fun);font-weight:600;font-size:14px;padding:13px;border-radius:13px;cursor:pointer;box-shadow:0 4px 10px rgba(31,110,104,.4)}
+
+/* ═════ LIGUE ═════ */
+.league-card{background:linear-gradient(165deg,#33261d,#211913);border-radius:20px;padding:16px;box-shadow:0 12px 28px var(--shadow);margin-bottom:14px;color:#f6ecd9}
+.league-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.league-tier{font-family:var(--fun);font-weight:700;font-size:18px}
+.league-reset{font-family:var(--mono);font-size:10px;color:#c7b39c;text-align:right}
+.league-reset b{color:var(--mustard)}
+.league-region{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:#c7b39c;margin-bottom:14px}
+.league-region select{font-family:var(--fun);font-size:12px;padding:6px 8px;border-radius:9px;border:none;background:#0f0b08;color:#f6ecd9;cursor:pointer}
+.mini{font-family:var(--fun);font-size:11px;padding:6px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:transparent;color:#f6ecd9;cursor:pointer}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;min-height:150px}
+.pod{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;max-width:100px}
+.pod .pav{border-radius:50%;border:3px solid;overflow:hidden;background:#fff}
+.pod .pav img{width:100%;height:100%;display:block}
+.pod.p1 .pav{width:66px;height:66px;border-color:#F4C542}
+.pod.p2 .pav{width:54px;height:54px;border-color:#CBD5DB}
+.pod.p3 .pav{width:54px;height:54px;border-color:#D8975A}
+.pod .pname{font-size:11px;font-weight:600;max-width:92px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.pod .pbar{width:100%;border-radius:9px 9px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:6px;font-family:var(--fun);font-weight:700;font-size:16px;color:#2a211c}
+.pod.p1 .pbar{height:70px;background:linear-gradient(180deg,#F4C542,#d9a629)}
+.pod.p2 .pbar{height:48px;background:linear-gradient(180deg,#CBD5DB,#9fb0b8)}
+.pod.p3 .pbar{height:36px;background:linear-gradient(180deg,#D8975A,#b3763b)}
+.pod .medal{font-size:18px;margin-top:-2px}
+.pod .ppairs{font-family:var(--mono);font-size:9px;color:#c7b39c}
+
+.rank-list{display:flex;flex-direction:column;gap:7px}
+.rank-row{display:flex;align-items:center;gap:11px;background:var(--paper);border-radius:13px;padding:9px 12px;box-shadow:0 3px 8px var(--shadow);position:relative;border-left:4px solid transparent}
+.rank-row.promo{border-left-color:#4CAF7D}
+.rank-row.releg{border-left-color:#E0654F}
+.rank-row.me{background:linear-gradient(90deg,#FBEAD2,#FBF3E4);box-shadow:0 4px 12px rgba(234,92,59,.28);outline:2px solid var(--coral)}
+.rank-pos{font-family:var(--fun);font-weight:700;font-size:15px;color:var(--brown3);width:26px;text-align:center;flex:0 0 26px}
+.rank-row.me .rank-pos{color:var(--coral)}
+.rank-av{width:42px;height:42px;flex:0 0 42px;border-radius:50%;overflow:hidden;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.15)}
+.rank-av img{width:100%;height:100%;display:block}
+.rank-id{flex:1;min-width:0}
+.rank-name{font-weight:600;font-size:14px;color:var(--brown);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-sub{font-family:var(--mono);font-size:10px;color:var(--brown3)}
+.rank-score{text-align:right;line-height:1.1}
+.rank-score b{font-size:15px;color:var(--brown);font-weight:700}
+.rank-score small{display:block;font-family:var(--mono);font-size:8px;color:var(--brown3);text-transform:uppercase}
+.rank-move{font-size:11px;margin-left:2px}
+.league-note{text-align:center;font-size:11px;color:var(--brown3);line-height:1.6;margin-top:14px;padding:0 10px}
+
 input[type=file]{display:none}
 </style>
 </head>
@@ -226,8 +307,10 @@ input[type=file]{display:none}
   <div class="tagline">scanne · détoure · collectionne</div>
 
   <div class="tabs">
-    <button class="tab on" data-tab="scan">📷 Scanner</button>
-    <button class="tab" data-tab="closet">🚪 Mon armoire <span class="cnt" id="tabCount">0</span></button>
+    <button class="tab on" data-tab="scan">📷<span class="lbl">Scan</span></button>
+    <button class="tab" data-tab="closet">🚪<span class="lbl">Armoire</span><span class="cnt" id="tabCount">0</span></button>
+    <button class="tab" data-tab="perso">🧍<span class="lbl">Perso</span></button>
+    <button class="tab" data-tab="ligue">🏆<span class="lbl">Ligue</span></button>
   </div>
 
   <!-- SETUP (key) -->
@@ -315,6 +398,56 @@ input[type=file]{display:none}
     </div>
   </section>
 
+  <!-- ═════ VIEW : PERSO (avatar) ═════ -->
+  <section class="view" id="view-perso">
+    <div class="perso-card">
+      <div class="perso-head">
+        <div class="lvl-badge"><span id="lvlNum">1</span></div>
+        <div class="perso-meta">
+          <div class="perso-name" id="persoTitle">Débutant·e</div>
+          <div class="xpwrap"><div class="xpbar"><i id="xpFill"></i></div><span class="xptxt" id="xpTxt">0 / 3</span></div>
+        </div>
+        <div class="perso-pairs"><b id="persoPairs">0</b><small>paires</small></div>
+      </div>
+      <div class="avatar-stage" id="avatarStage"></div>
+      <div class="worn-line" id="wornLine">Aucune paire aux pieds — choisis-en une 👇</div>
+    </div>
+
+    <div class="customizer">
+      <div class="opt-group">
+        <h4>👟 Paire aux pieds</h4>
+        <div class="pair-picker" id="pairPicker"></div>
+      </div>
+      <div class="opt-group"><h4>🎨 Peau</h4><div class="swatches" data-part="skin" id="swSkin"></div></div>
+      <div class="opt-group"><h4>💇 Cheveux</h4>
+        <div class="styles" id="hairStyles"></div>
+        <div class="swatches" data-part="hair" id="swHair"></div>
+      </div>
+      <div class="opt-group"><h4>👕 Haut</h4><div class="swatches" data-part="top" id="swTop"></div></div>
+      <div class="opt-group"><h4>👖 Bas</h4><div class="swatches" data-part="bot" id="swBot"></div></div>
+      <div class="opt-group"><h4>🖼️ Fond</h4><div class="swatches" data-part="bg" id="swBg"></div></div>
+      <button class="share-av" id="shareAvatar">📲 Partager mon perso</button>
+    </div>
+  </section>
+
+  <!-- ═════ VIEW : LIGUE ═════ -->
+  <section class="view" id="view-ligue">
+    <div class="league-card">
+      <div class="league-top">
+        <div class="league-tier" id="leagueTier">🥇 Ligue Or</div>
+        <div class="league-reset">Fin de saison dans <b id="leagueReset">—</b></div>
+      </div>
+      <div class="league-region">
+        <span>📍 Région :</span>
+        <select id="regionSel"></select>
+        <button id="editName" class="mini">✏️ Mon pseudo</button>
+      </div>
+      <div class="podium" id="podium"></div>
+    </div>
+    <div class="rank-list" id="rankList"></div>
+    <div class="league-note">Classement simulé — tes voisins de région sont générés pour la démo. Grimpe en scannant plus de paires 👟</div>
+  </section>
+
 </div>
 
 <!-- DETAIL MODAL -->
@@ -375,8 +508,11 @@ function switchTab(name){
   $$('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===name));
   $$('.view').forEach(v=>v.classList.remove('on'));
   $('#view-'+name).classList.add('on');
-  if(name==='closet'){ stopCam(); renderCloset(); }
-  else startCam();
+  if(name==='scan'){ startCam(); return; }
+  stopCam();
+  if(name==='closet') renderCloset();
+  else if(name==='perso') renderPerso();
+  else if(name==='ligue') renderLeague();
 }
 
 /* ── CAMERA ── */
@@ -385,6 +521,8 @@ async function startCam(){
   try{
     stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1280},height:{ideal:1280}},audio:false});
     const v=$('#video'); v.srcObject=stream; v.style.display='block'; $('#shot').style.display='none';
+    // mirror ONLY the front (selfie) camera; rear camera keeps natural, non-mirrored motion
+    v.classList.toggle('mirror', facing==='user');
     $('#screenMsg').style.display='none'; $('#hudMode').textContent='LIVE';
   }catch(e){
     $('#screenMsg').style.display='flex';
@@ -627,6 +765,285 @@ async function sharePair(p){
   window.location.href=`sms:${sep}body=${encodeURIComponent(msg)}`;
   toast('📥 Sticker téléchargé — joins-le à ton SMS');
 }
+
+/* ════════════════════════════════════════════
+   GAMIFICATION : niveaux
+   ════════════════════════════════════════════ */
+const TITLES=[
+  {min:0,name:'Bleu·e du bitume'},{min:3,name:'Collectionneur·se'},
+  {min:6,name:'Sneakerhead'},{min:10,name:'Chasseur·se de hype'},
+  {min:16,name:'Curateur·rice'},{min:24,name:'Légende locale'},
+  {min:36,name:'Icône de la région'}
+];
+function levelInfo(n){
+  const lvl=Math.floor(n/3)+1;
+  const cur=n%3, need=3;
+  let title=TITLES[0].name;
+  for(const t of TITLES){ if(n>=t.min) title=t.name; }
+  return {lvl,cur,need,title};
+}
+
+/* ════════════════════════════════════════════
+   PRNG déterministe (pour ligue + faces stables)
+   ════════════════════════════════════════════ */
+function hashStr(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function mkRng(seed){let s=seed>>>0||1;return ()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};}
+const pick=(r,arr)=>arr[Math.floor(r()*arr.length)];
+
+/* ════════════════════════════════════════════
+   PALETTES AVATAR
+   ════════════════════════════════════════════ */
+const AV_SKIN=['#F7D7BE','#EFC299','#D89C6A','#B77B49','#875234'];
+const AV_HAIR=['#241A14','#5E3B21','#3F2A1B','#C99A4E','#E7C97A','#B23B2E','#7D4CA0','#2E6FB0','#E8E8E8'];
+const AV_TOP=['#EA5C3B','#2F958E','#E7A93A','#3E6DB5','#8E5AA8','#2A211C','#E85D9A','#4CAF7D','#F4F1EA'];
+const AV_BOT=['#3D4A5C','#2A211C','#5C4433','#6B7280','#264653','#7A3B2E','#B0B7BE'];
+const AV_BG=['#FBE7C6','#CDE7E1','#F6D6D9','#DDE7F6','#EAD9F2','#F4E7D2','#FFE3B3','#D7F0DC'];
+const HAIR_STYLES=['Court','Bouclé','Chignon','Casquette','Long'];
+
+let avatar=loadAvatar();
+function loadAvatar(){ try{return Object.assign(defAvatar(),JSON.parse(localStorage.getItem('snkr_avatar'))||{});}catch(e){return defAvatar();} }
+function defAvatar(){ return {skin:1,hair:0,top:0,bot:0,bg:0,style:0,pairId:null}; }
+function saveAvatar(){ try{localStorage.setItem('snkr_avatar',JSON.stringify(avatar));}catch(e){} }
+
+/* Build the big bitmoji-style character SVG */
+function avatarSVG(cfg,pairUrl){
+  const skin=AV_SKIN[cfg.skin], hair=AV_HAIR[cfg.hair], top=AV_TOP[cfg.top], bot=AV_BOT[cfg.bot], bg=AV_BG[cfg.bg];
+  const dark=shade(skin,-22);
+  let hairEl='';
+  const style=HAIR_STYLES[cfg.style]||'Court';
+  if(style==='Court') hairEl=`<path d="M78 78 Q78 40 120 40 Q162 40 162 78 Q150 60 120 60 Q90 60 78 78 Z" fill="${hair}"/>`;
+  else if(style==='Bouclé') hairEl=`<g fill="${hair}">${[...Array(9)].map((_,i)=>{const a=Math.PI*(0.08+i*0.105);return `<circle cx="${120-Math.cos(a)*46}" cy="${86-Math.sin(a)*40}" r="14"/>`;}).join('')}<path d="M80 84 Q80 46 120 46 Q160 46 160 84 Q148 66 120 66 Q92 66 80 84Z"/></g>`;
+  else if(style==='Chignon') hairEl=`<circle cx="120" cy="34" r="16" fill="${hair}"/><path d="M80 80 Q80 44 120 44 Q160 44 160 80 Q148 62 120 62 Q92 62 80 80Z" fill="${hair}"/>`;
+  else if(style==='Casquette') hairEl=`<path d="M82 74 Q82 42 120 42 Q158 42 158 74 L82 74Z" fill="${hair}"/><path d="M78 74 Q120 66 162 74 L166 82 Q120 76 74 82 Z" fill="${shade(hair,-18)}"/><path d="M118 42 Q158 40 158 74 L128 74 Q128 50 118 42Z" fill="${shade(hair,12)}"/>`;
+  else if(style==='Long') hairEl=`<path d="M74 150 Q66 80 120 42 Q174 80 166 150 Q150 120 150 92 Q150 70 120 62 Q90 70 90 92 Q90 120 74 150Z" fill="${hair}"/><path d="M80 78 Q80 44 120 44 Q160 44 160 78 Q148 62 120 62 Q92 62 80 78Z" fill="${hair}"/>`;
+
+  // shoes at feet: the scanned pair as two little sticker tiles, else simple sneakers
+  let feet;
+  if(pairUrl){
+    feet=`
+      <g transform="translate(95 268) rotate(-9)"><rect x="-25" y="-22" width="50" height="44" rx="10" fill="#fff"/><clipPath id="cl1"><rect x="-25" y="-22" width="50" height="44" rx="10"/></clipPath><image href="${pairUrl}" x="-27" y="-27" width="54" height="54" clip-path="url(#cl1)" preserveAspectRatio="xMidYMid meet"/></g>
+      <g transform="translate(145 268) rotate(9)"><rect x="-25" y="-22" width="50" height="44" rx="10" fill="#fff"/><clipPath id="cl2"><rect x="-25" y="-22" width="50" height="44" rx="10"/></clipPath><image href="${pairUrl}" x="-27" y="-27" width="54" height="54" clip-path="url(#cl2)" preserveAspectRatio="xMidYMid meet"/></g>`;
+  }else{
+    feet=`<g fill="#e9e2d4" stroke="${shade('#e9e2d4',-25)}" stroke-width="2">
+      <path d="M78 276 q-14 2 -14 12 q0 6 8 6 h30 q6 0 6-8 v-14 q-16 4 -30 4Z"/>
+      <path d="M162 276 q14 2 14 12 q0 6 -8 6 h-30 q-6 0 -6-8 v-14 q16 4 30 4Z"/></g>`;
+  }
+
+  return `<svg viewBox="0 0 240 300" xmlns="http://www.w3.org/2000/svg" style="background:${bg}">
+    <ellipse cx="120" cy="288" rx="70" ry="10" fill="rgba(0,0,0,.10)"/>
+    ${feet}
+    <!-- legs -->
+    <rect x="102" y="212" width="16" height="66" rx="8" fill="${bot}"/>
+    <rect x="122" y="212" width="16" height="66" rx="8" fill="${bot}"/>
+    <!-- shorts/hips -->
+    <path d="M96 196 h48 v18 q0 8-8 8 h-8 v-14 h-8 v14 h-8 q-8 0-8-8Z" fill="${shade(bot,10)}"/>
+    <!-- arms -->
+    <rect x="70" y="126" width="17" height="66" rx="9" fill="${top}"/>
+    <rect x="153" y="126" width="17" height="66" rx="9" fill="${top}"/>
+    <circle cx="78" cy="196" r="10" fill="${skin}"/>
+    <circle cx="162" cy="196" r="10" fill="${skin}"/>
+    <!-- torso -->
+    <path d="M84 128 q0-24 36-24 q36 0 36 24 v58 q0 12-12 12 H96 q-12 0-12-12Z" fill="${top}"/>
+    <path d="M104 108 q16 12 32 0 l-4 16 q-12 8-24 0Z" fill="${shade(top,-12)}"/>
+    <!-- neck -->
+    <rect x="112" y="98" width="16" height="18" rx="6" fill="${dark}"/>
+    <!-- head -->
+    <circle cx="120" cy="82" r="36" fill="${skin}"/>
+    <circle cx="86" cy="84" r="6" fill="${skin}"/><circle cx="154" cy="84" r="6" fill="${skin}"/>
+    <!-- face -->
+    <circle cx="107" cy="82" r="4.6" fill="#2A211C"/><circle cx="133" cy="82" r="4.6" fill="#2A211C"/>
+    <circle cx="108.5" cy="80.5" r="1.5" fill="#fff"/><circle cx="134.5" cy="80.5" r="1.5" fill="#fff"/>
+    <path d="M100 72 q7-5 14 0" stroke="${shade(hair,-10)}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path d="M126 72 q7-5 14 0" stroke="${shade(hair,-10)}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="98" cy="94" rx="6" ry="4" fill="#EA9A8C" opacity=".5"/><ellipse cx="142" cy="94" rx="6" ry="4" fill="#EA9A8C" opacity=".5"/>
+    <path d="M108 96 q12 12 24 0" stroke="#B4553F" stroke-width="3" fill="none" stroke-linecap="round"/>
+    ${hairEl}
+  </svg>`;
+}
+function shade(hex,pct){
+  const n=parseInt(hex.slice(1),16);let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  const f=pct/100;const t=pct<0?0:255,a=Math.abs(f);
+  r=Math.round((t-r)*a+r);g=Math.round((t-g)*a+g);b=Math.round((t-b)*a+b);
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+
+/* Small round cartoon face for league members */
+function faceSVG(seed){
+  const r=mkRng(hashStr(seed));
+  const skin=pick(r,AV_SKIN),hair=pick(r,AV_HAIR),bg=pick(r,AV_BG);
+  const st=Math.floor(r()*4);const glasses=r()<0.28;
+  let h='';
+  if(st===0) h=`<path d="M20 34 Q20 12 44 12 Q68 12 68 34 Q58 22 44 22 Q30 22 20 34Z" fill="${hair}"/>`;
+  else if(st===1) h=`<g fill="${hair}"><circle cx="24" cy="26" r="9"/><circle cx="38" cy="18" r="9"/><circle cx="52" cy="20" r="9"/><circle cx="63" cy="28" r="8"/><path d="M22 34 Q22 14 44 14 Q66 14 66 34 Q56 24 44 24 Q32 24 22 34Z"/></g>`;
+  else if(st===2) h=`<path d="M18 40 Q16 8 44 8 Q72 8 70 40 Q62 26 62 22 Q44 18 26 22 Q26 26 18 40Z" fill="${hair}"/>`;
+  else h=`<path d="M20 30 Q20 10 44 10 Q68 10 68 30 L20 30Z" fill="${hair}"/><path d="M18 30 Q44 24 70 30 L72 36 Q44 30 16 36Z" fill="${shade(hair,-18)}"/>`;
+  const gl=glasses?`<g stroke="#2A211C" stroke-width="2" fill="rgba(255,255,255,.25)"><circle cx="35" cy="42" r="7"/><circle cx="53" cy="42" r="7"/><path d="M42 42 h4" fill="none"/></g>`:'';
+  const svg=`<svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect width="88" height="88" fill="${bg}"/><circle cx="44" cy="52" r="20" fill="${shade(skin,-12)}"/><circle cx="44" cy="44" r="26" fill="${skin}"/><circle cx="35" cy="43" r="3.4" fill="#2A211C"/><circle cx="53" cy="43" r="3.4" fill="#2A211C"/><path d="M37 55 q7 7 14 0" stroke="#B4553F" stroke-width="2.6" fill="none" stroke-linecap="round"/>${gl}${h}</svg>`;
+  return 'data:image/svg+xml,'+encodeURIComponent(svg);
+}
+
+/* ════════════════════════════════════════════
+   RENDER PERSO
+   ════════════════════════════════════════════ */
+function renderPerso(){
+  const n=pairs.length, info=levelInfo(n);
+  $('#lvlNum').textContent=info.lvl;
+  $('#persoTitle').textContent=info.title;
+  $('#persoPairs').textContent=n;
+  $('#xpTxt').textContent=info.cur+' / '+info.need;
+  setTimeout(()=>{ $('#xpFill').style.width=(info.cur/info.need*100)+'%'; },50);
+
+  // validate worn pair still exists
+  if(avatar.pairId && !pairs.find(p=>p.id===avatar.pairId)){ avatar.pairId=null; saveAvatar(); }
+  const worn=avatar.pairId?pairs.find(p=>p.id===avatar.pairId):null;
+  $('#avatarStage').innerHTML=avatarSVG(avatar, worn?worn.dataUrl:null);
+  $('#wornLine').innerHTML= worn ? ('👟 Aux pieds : <b>'+escapeHtml(worn.name)+'</b>') : 'Aucune paire aux pieds — choisis-en une 👇';
+
+  buildSwatches('#swSkin',AV_SKIN,'skin');
+  buildSwatches('#swHair',AV_HAIR,'hair');
+  buildSwatches('#swTop',AV_TOP,'top');
+  buildSwatches('#swBot',AV_BOT,'bot');
+  buildSwatches('#swBg',AV_BG,'bg');
+  buildHairStyles();
+  buildPairPicker();
+}
+function buildSwatches(sel,arr,part){
+  const el=$(sel); el.innerHTML='';
+  arr.forEach((c,i)=>{
+    const s=document.createElement('div');
+    s.className='swatch'+(avatar[part]===i?' on':'');
+    s.style.background=c;
+    s.onclick=()=>{ avatar[part]=i; saveAvatar(); renderPerso(); };
+    el.appendChild(s);
+  });
+}
+function buildHairStyles(){
+  const el=$('#hairStyles'); el.innerHTML='';
+  HAIR_STYLES.forEach((name,i)=>{
+    const b=document.createElement('button');
+    b.className='style-btn'+(avatar.style===i?' on':'');
+    b.textContent=name;
+    b.onclick=()=>{ avatar.style=i; saveAvatar(); renderPerso(); };
+    el.appendChild(b);
+  });
+}
+function buildPairPicker(){
+  const el=$('#pairPicker'); el.innerHTML='';
+  if(!pairs.length){ el.innerHTML='<div class="pp-empty">Scanne une paire pour la mettre aux pieds 👟</div>'; return; }
+  const none=document.createElement('div');
+  none.className='pp-item none'+(avatar.pairId?'':' on'); none.textContent='🚫';
+  none.onclick=()=>{ avatar.pairId=null; saveAvatar(); renderPerso(); };
+  el.appendChild(none);
+  pairs.forEach(p=>{
+    const it=document.createElement('div');
+    it.className='pp-item'+(avatar.pairId===p.id?' on':'');
+    it.innerHTML=`<img src="${p.dataUrl}" alt="">`;
+    it.onclick=()=>{ avatar.pairId=p.id; saveAvatar(); renderPerso(); };
+    el.appendChild(it);
+  });
+}
+$('#shareAvatar').onclick=shareAvatar;
+async function shareAvatar(){
+  const info=levelInfo(pairs.length);
+  const msg=`Mon perso Sneakerie — niveau ${info.lvl} « ${info.title} » avec ${pairs.length} paire(s) 👟✨`;
+  // rasterise the avatar SVG to PNG for sharing
+  try{
+    const svg=$('#avatarStage').querySelector('svg').outerHTML;
+    const png=await svgToPng(svg,600,750);
+    const blob=await (await fetch(png)).blob();
+    const file=new File([blob],'mon-perso.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({text:msg,files:[file]}); return; }
+    if(navigator.share){ await navigator.share({text:msg}); return; }
+    const a=document.createElement('a'); a.href=png; a.download='mon-perso.png'; a.click();
+    toast('📥 Perso téléchargé !');
+  }catch(e){ if(e&&e.name==='AbortError')return; toast('Partage indisponible'); }
+}
+function svgToPng(svgStr,w,h){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    const url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgStr);
+    img.onload=()=>{ const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');ctx.drawImage(img,0,0,w,h);try{res(c.toDataURL('image/png'));}catch(e){rej(e);} };
+    img.onerror=rej; img.src=url;
+  });
+}
+
+/* ════════════════════════════════════════════
+   LIGUE SIMULÉE
+   ════════════════════════════════════════════ */
+const REGIONS=['Île-de-France','Auvergne-Rhône-Alpes','PACA','Occitanie','Hauts-de-France','Nouvelle-Aquitaine','Grand Est','Bretagne','Normandie','Pays de la Loire'];
+const FIRST=['Léa','Hugo','Camille','Yanis','Manon','Noah','Inès','Enzo','Jade','Lucas','Sarah','Adam','Chloé','Rayan','Emma','Nathan','Lina','Théo','Zoé','Malik','Alice','Sofiane','Louise','Gabriel','Nour','Ethan','Maëlys','Aaron','Jana','Ilyes'];
+const LAST=['M.','B.','D.','K.','L.','P.','R.','S.','T.','N.','F.','G.','C.','V.'];
+function getRegion(){ return localStorage.getItem('snkr_region')||REGIONS[0]; }
+function getUsername(){ return localStorage.getItem('snkr_user')||'Toi'; }
+
+function makeBots(region){
+  const r=mkRng(hashStr('bots::'+region));
+  const used=new Set(); const bots=[];
+  for(let i=0;i<17;i++){
+    let name; let g=0;
+    do{ name=pick(r,FIRST)+' '+pick(r,LAST); g++; }while(used.has(name)&&g<10);
+    used.add(name);
+    // distribution: few whales, many mid, some low
+    const roll=r();
+    let np = roll>0.88 ? 28+Math.floor(r()*20) : roll>0.55 ? 10+Math.floor(r()*16) : Math.floor(r()*10);
+    bots.push({name, pairs:np, score:np*100+Math.floor(r()*90), face:faceSVG(region+name), bot:true});
+  }
+  return bots;
+}
+function renderLeague(){
+  fillRegionSelect();
+  const region=getRegion();
+  const me={ name:getUsername()+' (toi)', pairs:pairs.length, score:pairs.length*100+40, me:true, face:faceSVG('me::'+getUsername()) };
+  const all=makeBots(region).concat([me]).sort((a,b)=> b.score-a.score || b.pairs-a.pairs);
+  all.forEach((x,i)=>x.rank=i+1);
+  const total=all.length;
+  const myRank=all.find(x=>x.me).rank;
+  // tier by rank
+  const tier = myRank<=3?'🥇 Ligue Or' : myRank<=8?'🥈 Ligue Argent' : '🥉 Ligue Bronze';
+  $('#leagueTier').textContent=tier;
+  $('#leagueReset').textContent=daysToSunday()+' j';
+
+  // podium
+  const pod=$('#podium'); pod.innerHTML='';
+  const order=[1,0,2]; // p2,p1,p3 visual order
+  order.forEach(idx=>{
+    const m=all[idx]; if(!m)return;
+    const pos=idx+1;
+    const el=document.createElement('div'); el.className='pod p'+pos;
+    el.innerHTML=`<div class="medal">${pos===1?'🥇':pos===2?'🥈':'🥉'}</div>
+      <div class="pav"><img src="${m.face}" alt=""></div>
+      <div class="pname"${m.me?' style="color:var(--coral)"':''}>${escapeHtml(m.name)}</div>
+      <div class="ppairs">${m.pairs} 👟</div>
+      <div class="pbar">${m.score}</div>`;
+    pod.appendChild(el);
+  });
+
+  // full list
+  const list=$('#rankList'); list.innerHTML='';
+  all.forEach(m=>{
+    const promo=m.rank<=5, releg=m.rank>total-5;
+    const row=document.createElement('div');
+    row.className='rank-row'+(m.me?' me':'')+(promo?' promo':releg?' releg':'');
+    const move=promo?'<span class="rank-move">🔺</span>':releg?'<span class="rank-move">🔻</span>':'';
+    row.innerHTML=`
+      <div class="rank-pos">${m.rank}</div>
+      <div class="rank-av"><img src="${m.face}" alt=""></div>
+      <div class="rank-id"><div class="rank-name">${escapeHtml(m.name)}${move}</div><div class="rank-sub">${m.pairs} paire(s)</div></div>
+      <div class="rank-score"><b>${m.score}</b><small>pts</small></div>`;
+    list.appendChild(row);
+  });
+}
+function fillRegionSelect(){
+  const sel=$('#regionSel'); if(sel.children.length) { sel.value=getRegion(); return; }
+  REGIONS.forEach(rg=>{ const o=document.createElement('option'); o.value=rg; o.textContent=rg; sel.appendChild(o); });
+  sel.value=getRegion();
+  sel.onchange=()=>{ localStorage.setItem('snkr_region',sel.value); renderLeague(); };
+}
+$('#editName').onclick=()=>{
+  const v=prompt('Ton pseudo dans la ligue :',getUsername());
+  if(v && v.trim()){ localStorage.setItem('snkr_user',v.trim().slice(0,18)); renderLeague(); }
+};
+function daysToSunday(){ const d=new Date().getDay(); return (7-d)%7||7; }
 
 /* ── INIT ── */
 refreshSetup(); updateCounts(); startCam();
