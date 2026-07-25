@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "UNO",
+    "slug": "uno-expo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0f1226",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.uno.expo"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
