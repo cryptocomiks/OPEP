@@ -174,7 +174,7 @@ body::after{
 .sticker:nth-child(3n){--r:-2.5deg}
 .sticker:nth-child(3n+1){--r:2deg}
 .sticker:active{transform:scale(.95) rotate(0)}
-.sticker img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block;background:#f0e6d5}
+.sticker img{width:100%;aspect-ratio:1;object-fit:contain;border-radius:10px;display:block;background:#fff}
 .sticker .nm{font-size:11px;font-weight:600;text-align:center;margin-top:4px;color:var(--brown2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sticker.fresh{animation:land .6s cubic-bezier(.2,1.5,.4,1)}
 @keyframes land{0%{transform:scale(1.6) rotate(-8deg);opacity:0}60%{transform:scale(.92) rotate(3deg);opacity:1}100%{transform:rotate(var(--r,0deg))}}
@@ -190,7 +190,7 @@ body::after{
 .sheet{background:var(--paper);border-radius:22px;padding:18px;width:100%;max-width:380px;box-shadow:0 20px 50px rgba(0,0,0,.5);position:relative}
 .sheet .x{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:rgba(42,33,28,.08);font-size:16px;cursor:pointer;color:var(--brown2)}
 .sheet .polaroid{background:#fff;padding:12px 12px 16px;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,.2);transform:rotate(-1.5deg);margin:6px auto 16px;max-width:280px}
-.sheet .polaroid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;background:#f0e6d5}
+.sheet .polaroid img{width:100%;aspect-ratio:1;object-fit:contain;border-radius:4px;background:#fff}
 .sheet .polaroid .cap{text-align:center;font-family:var(--fun);font-weight:600;font-size:15px;margin-top:10px;color:var(--brown)}
 .sheet .polaroid .date{text-align:center;font-family:var(--mono);font-size:10px;color:var(--brown3);letter-spacing:1px;margin-top:2px}
 .sheet .actions{display:flex;gap:10px}
@@ -274,7 +274,7 @@ input[type=file]{display:none}
         <div class="flashfx" id="flashfx"></div>
         <div class="proc" id="proc">
           <div class="ring"></div>
-          <p><span class="step" id="procStep">Détourage patchwork…</span><br>la magie opère ✨</p>
+          <p><span class="step" id="procStep">Détourage sticker…</span><br>la magie opère ✨</p>
         </div>
       </div>
 
@@ -430,7 +430,7 @@ async function process(srcDataUrl){
 
   let sticker;
   if(getKey()){
-    showProc('Détourage patchwork…');
+    showProc('Détourage sticker…');
     try{
       sticker=await geminiSticker(srcDataUrl);
       setStep('Sticker prêt ✨');
@@ -441,7 +441,7 @@ async function process(srcDataUrl){
     }
   }else{
     // no key → local stylise so the app still works
-    showProc('Filtre patchwork…');
+    showProc('Filtre sticker…');
     sticker=await localSticker(srcDataUrl);
   }
   hideProc();
@@ -455,7 +455,7 @@ function hideProc(){ $('#proc').classList.remove('on'); }
 function shortErr(e){ const m=(e&&e.message)||String(e); return m.length>40?m.slice(0,40)+'…':m; }
 
 /* ── GEMINI ── */
-const PROMPT = "Transforme cette photo en STICKER. Garde uniquement la paire de chaussures et supprime totalement l'arrière-plan d'origine, remplacé par un fond uni pastel crème très clair. Redessine la paire dans un style PATCHWORK ludique et mignon : assemblage de morceaux de tissus colorés, textures feutrine et jean, coutures apparentes façon couture cousue-main. Ajoute un contour blanc épais de sticker die-cut tout autour de la paire, avec une douce ombre portée. Paire bien centrée, cadrage carré, look rétro et joyeux. Ne mets aucun texte.";
+const PROMPT = "Transforme cette photo de chaussure en un STICKER AUTOCOLLANT die-cut. Style : illustration vectorielle plate (flat design), contours noirs nets et propres, aplats de couleurs vives et pastel, ombrages simples. Garde fidèlement la forme, les détails et les couleurs de la chaussure d'origine. Supprime totalement l'arrière-plan. Ajoute un CONTOUR BLANC épais et régulier qui épouse exactement la silhouette découpée de la chaussure (effet sticker die-cut), avec une douce ombre portée grise en dessous. Fond entièrement blanc uni. Chaussure vue de profil, bien centrée, cadrage carré. N'ajoute aucun texte, logo ou élément décoratif supplémentaire.";
 
 async function geminiSticker(dataUrl){
   const {mime,b64}=splitDataUrl(dataUrl);
@@ -493,26 +493,22 @@ function localSticker(dataUrl){
     img.onload=()=>{
       const S=512, c=document.createElement('canvas'); c.width=S; c.height=S;
       const ctx=c.getContext('2d');
-      // cream backdrop
-      ctx.fillStyle='#FBF3E4'; ctx.fillRect(0,0,S,S);
-      // patchwork tint blocks behind
-      const cols=['#EA5C3B22','#2F958E22','#E7A93A22','#C8442A18'];
-      for(let i=0;i<16;i++){ ctx.fillStyle=cols[i%cols.length]; ctx.fillRect((i%4)*S/4,Math.floor(i/4)*S/4,S/4,S/4); }
-      // photo inset with rounded mask + white sticker border
-      const pad=54, r=34, x=pad,y=pad,w=S-pad*2,h=S-pad*2;
+      // clean white sticker backdrop
+      ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,S,S);
+      // photo inset as a die-cut-style card: thick white border + soft drop shadow
+      const pad=48, r=30, x=pad,y=pad,w=S-pad*2,h=S-pad*2;
       ctx.save();
-      ctx.shadowColor='rgba(42,33,28,.35)'; ctx.shadowBlur=22; ctx.shadowOffsetY=10;
-      roundRect(ctx,x-10,y-10,w+20,h+20,r+10); ctx.fillStyle='#fff'; ctx.fill();
+      ctx.shadowColor='rgba(42,33,28,.28)'; ctx.shadowBlur=26; ctx.shadowOffsetY=12;
+      roundRect(ctx,x-14,y-14,w+28,h+28,r+14); ctx.fillStyle='#fff'; ctx.fill();
       ctx.restore();
-      roundRect(ctx,x,y,w,h,r); ctx.clip();
-      // cover-fit
+      roundRect(ctx,x,y,w,h,r); ctx.save(); ctx.clip();
+      // cover-fit with punchy flat-illustration-ish grading
       const s=Math.min(img.width,img.height), sx=(img.width-s)/2, sy=(img.height-s)/2;
-      ctx.filter='saturate(1.5) contrast(1.12) brightness(1.03)';
+      ctx.filter='saturate(1.55) contrast(1.15) brightness(1.04)';
       ctx.drawImage(img,sx,sy,s,s,x,y,w,h);
-      ctx.filter='none';
-      // stitched dashed border
-      ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=5; ctx.setLineDash([12,9]); ctx.lineDashOffset=6;
-      roundRect(ctx,x+6,y+6,w-12,h-12,r-6); ctx.stroke();
+      ctx.filter='none'; ctx.restore();
+      // crisp inner white keyline (sticker feel)
+      ctx.strokeStyle='#fff'; ctx.lineWidth=8; roundRect(ctx,x+4,y+4,w-8,h-8,r-4); ctx.stroke();
       res(c.toDataURL('image/png'));
     };
     img.onerror=()=>res(dataUrl);
