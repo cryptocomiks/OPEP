@@ -24,6 +24,11 @@ export const theme = {
   border: '#343b6e',
 };
 
+export const GRAD = {
+  home: ['#20265c', '#0b0e22'],
+  table: ['#161b3c', '#0a0d1f'],
+};
+
 export const LABELS = {
   '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
   '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',

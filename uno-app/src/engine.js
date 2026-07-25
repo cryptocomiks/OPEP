@@ -94,6 +94,26 @@ export function createGame(players, seed) {
   };
 }
 
+// Official UNO scoring: number cards = face value, action cards = 20, wilds = 50.
+export function cardPoints(card) {
+  if (card.value === 'wild' || card.value === 'wild4') return 50;
+  if (card.value === 'skip' || card.value === 'reverse' || card.value === 'draw2') return 20;
+  return parseInt(card.value, 10) || 0;
+}
+
+export function handPoints(hand) {
+  return hand.reduce((a, c) => a + cardPoints(c), 0);
+}
+
+// Cash the winner earns = total points still held by everyone else (+ a small base).
+export function roundReward(state, winnerId) {
+  let pts = 0;
+  for (const p of state.players) {
+    if (p.id !== winnerId) pts += handPoints(state.hands[p.id] || []);
+  }
+  return 25 + pts;
+}
+
 export function topCard(state) {
   return state.discard[state.discard.length - 1];
 }
@@ -195,7 +215,8 @@ export function applyAction(state, action) {
     if (hand.length === 0) {
       state.status = 'finished';
       state.winner = pid;
-      state.log.push(`🏆 ${nameOf(state, pid)} gagne la partie !`);
+      state.reward = roundReward(state, pid);
+      state.log.push(`🏆 ${nameOf(state, pid)} gagne la manche ! +${state.reward}$`);
       return { ok: true, state };
     }
 
@@ -258,6 +279,7 @@ export function publicView(state, viewerId) {
     drawCount: state.drawPile.length,
     status: state.status,
     winner: state.winner,
+    reward: state.reward || 0,
     awaitingPlay: state.awaitingPlay,
     currentPlayerId: currentPlayerId(state),
     log: state.log.slice(-6),

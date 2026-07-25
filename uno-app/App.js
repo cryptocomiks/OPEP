@@ -10,17 +10,22 @@ import {
   StatusBar,
   Platform,
   KeyboardAvoidingView,
+  Animated,
+  Easing,
+  Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 import Card from './src/components/Card';
-import { CARD_COLORS, theme } from './src/theme';
-import {
-  createGame,
-  applyAction,
-  publicView,
-  canPlay,
-  COLORS,
-} from './src/engine';
+import UnoLogo from './src/components/UnoLogo';
+import IntroSplash from './src/components/IntroSplash';
+import FxLayer from './src/components/FxLayer';
+import WinOverlay from './src/components/WinOverlay';
+import { CARD_COLORS, theme, GRAD } from './src/theme';
+import { createGame, applyAction, publicView, canPlay, COLORS } from './src/engine';
+import { botAction } from './src/bots';
 import { GameClient, makeCode, makeId } from './src/net';
+import { getBalance, addBalance } from './src/wallet';
 
 const randomName = () => {
   const a = ['Rapide', 'Malin', 'Chanceux', 'Rusé', 'Cool', 'Fou', 'Zen', 'Turbo'];
@@ -28,8 +33,18 @@ const randomName = () => {
   return a[Math.floor(Math.random() * a.length)] + ' ' + b[Math.floor(Math.random() * b.length)];
 };
 
+const haptic = (kind) => {
+  try {
+    if (kind === 'heavy') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    else if (kind === 'success') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  } catch (e) {}
+};
+
 export default function App() {
+  const [intro, setIntro] = useState(true);
   const [screen, setScreen] = useState('home'); // home | lobby | game
+  const [mode, setMode] = useState(null); // solo | multi
   const [name, setName] = useState(randomName());
   const [codeInput, setCodeInput] = useState('');
   const [code, setCode] = useState('');
@@ -37,22 +52,38 @@ export default function App() {
   const [status, setStatus] = useState('offline');
   const [lobby, setLobby] = useState({ players: [], hostId: null, started: false });
   const [gameState, setGameState] = useState(null);
-  const [colorPickFor, setColorPickFor] = useState(null); // cardId awaiting color
+  const [colorPickFor, setColorPickFor] = useState(null);
   const [toast, setToast] = useState('');
+  const [balance, setBalance] = useState(0);
+  const [bots, setBots] = useState(1);
+  const [fx, setFx] = useState(null);
+  const [fxKey, setFxKey] = useState(0);
 
   const meRef = useRef({ id: makeId(), name });
   const clientRef = useRef(null);
-  const stateRef = useRef(null); // host authoritative
+  const stateRef = useRef(null);
   const lobbyRef = useRef({ players: [], hostId: null, started: false });
   const roleRef = useRef(null);
+  const modeRef = useRef(null);
+  const prevRef = useRef({ topId: null, myCount: 0, finished: false });
+  const rewardAppliedRef = useRef(false);
 
   useEffect(() => {
     meRef.current.name = name;
   }, [name]);
 
+  useEffect(() => {
+    getBalance().then(setBalance);
+  }, []);
+
   const flash = useCallback((msg) => {
     setToast(msg);
     setTimeout(() => setToast(''), 2200);
+  }, []);
+
+  const triggerFx = useCallback((f) => {
+    setFx(f);
+    setFxKey((k) => k + 1);
   }, []);
 
   const cleanup = useCallback(() => {
@@ -60,37 +91,87 @@ export default function App() {
     clientRef.current = null;
     stateRef.current = null;
     lobbyRef.current = { players: [], hostId: null, started: false };
+    prevRef.current = { topId: null, myCount: 0, finished: false };
   }, []);
 
   useEffect(() => () => cleanup(), [cleanup]);
 
-  // ---------- HOST ----------
+  // ---------- SOLO ----------
+  const startSolo = useCallback(() => {
+    const me = meRef.current;
+    const players = [{ id: me.id, name: me.name || 'Toi' }];
+    for (let i = 1; i <= bots; i++) players.push({ id: 'bot' + i, name: 'Bot ' + i });
+    modeRef.current = 'solo';
+    setMode('solo');
+    roleRef.current = 'host';
+    setRole('host');
+    lobbyRef.current = { players, hostId: me.id, started: true };
+    const seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0;
+    const st = createGame(players, seed);
+    stateRef.current = st;
+    rewardAppliedRef.current = false;
+    prevRef.current = { topId: null, myCount: 0, finished: false };
+    setGameState({ ...st });
+    setScreen('game');
+  }, [bots]);
+
+  const applyLocal = useCallback(
+    (action) => {
+      const st = stateRef.current;
+      if (!st) return;
+      const res = applyAction(st, action);
+      if (res.ok) {
+        stateRef.current = res.state;
+        setGameState({ ...res.state });
+      } else if (action.playerId === meRef.current.id) {
+        flash(res.error);
+      }
+    },
+    [flash]
+  );
+
+  // bot loop (solo): whenever it's a bot's turn, schedule its move
+  useEffect(() => {
+    if (modeRef.current !== 'solo' || !gameState) return;
+    const v = publicView(gameState);
+    if (v.status !== 'playing') return;
+    const cur = v.currentPlayerId;
+    if (cur === meRef.current.id) return;
+    const timer = setTimeout(() => {
+      const st = stateRef.current;
+      if (!st || st.status !== 'playing') return;
+      if (publicView(st).currentPlayerId !== cur) return;
+      applyLocal(botAction(st, cur));
+    }, 950);
+    return () => clearTimeout(timer);
+  }, [gameState, applyLocal]);
+
+  // ---------- HOST (multi) ----------
   const hostGame = useCallback(() => {
     const newCode = makeCode();
     const me = meRef.current;
+    modeRef.current = 'multi';
+    setMode('multi');
     roleRef.current = 'host';
     setRole('host');
     setCode(newCode);
-
     lobbyRef.current = { players: [{ id: me.id, name: me.name }], hostId: me.id, started: false };
 
     const client = new GameClient(newCode, {
       onStatus: (s) => setStatus(s),
       onJoin: (player) => {
         const lob = lobbyRef.current;
-        if (lob.started) return;
-        if (!player || !player.id) return;
+        if (lob.started || !player || !player.id) return;
         if (!lob.players.find((p) => p.id === player.id)) {
           lob.players = [...lob.players, { id: player.id, name: player.name || 'Joueur' }];
           setLobby({ ...lob });
         }
-        client.publishLobby(lob); // ack so the joiner sees themselves
+        client.publishLobby(lob);
       },
       onAction: (action) => {
         const st = stateRef.current;
         if (!st) return;
         const res = applyAction(st, action);
-        // even on invalid action we keep going; just don't broadcast garbage
         if (res.ok) {
           stateRef.current = res.state;
           setGameState({ ...res.state });
@@ -100,12 +181,10 @@ export default function App() {
     });
     clientRef.current = client;
     client.connect();
-    const onConn = () => {
+    client.client.on('connect', () => {
       client.subscribeAsHost();
       client.publishLobby(lobbyRef.current);
-    };
-    // subscribe as soon as connected
-    client.client.on('connect', onConn);
+    });
     setLobby({ ...lobbyRef.current });
     setScreen('lobby');
   }, []);
@@ -121,6 +200,8 @@ export default function App() {
     stateRef.current = st;
     lob.started = true;
     lobbyRef.current = lob;
+    rewardAppliedRef.current = false;
+    prevRef.current = { topId: null, myCount: 0, finished: false };
     setLobby({ ...lob });
     setGameState({ ...st });
     clientRef.current.publishLobby(lob);
@@ -129,16 +210,17 @@ export default function App() {
   }, [flash]);
 
   const newRound = useCallback(() => {
-    // host only, reuse same lobby
     const lob = lobbyRef.current;
     const seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0;
     const st = createGame(lob.players, seed);
     stateRef.current = st;
+    rewardAppliedRef.current = false;
+    prevRef.current = { topId: null, myCount: 0, finished: false };
     setGameState({ ...st });
-    clientRef.current.publishState(st);
+    if (modeRef.current === 'multi' && clientRef.current) clientRef.current.publishState(st);
   }, []);
 
-  // ---------- GUEST ----------
+  // ---------- GUEST (multi) ----------
   const joinGame = useCallback(() => {
     const c = codeInput.trim().toUpperCase();
     if (c.length < 4) {
@@ -146,6 +228,8 @@ export default function App() {
       return;
     }
     const me = meRef.current;
+    modeRef.current = 'multi';
+    setMode('multi');
     roleRef.current = 'guest';
     setRole('guest');
     setCode(c);
@@ -155,7 +239,6 @@ export default function App() {
       onLobby: (lob) => {
         lobbyRef.current = lob;
         setLobby(lob);
-        // if we're not in the roster yet, (re)announce ourselves
         if (!lob.players.find((p) => p.id === me.id) && !lob.started) {
           client.sendJoin({ id: me.id, name: me.name });
         }
@@ -172,7 +255,6 @@ export default function App() {
     client.client.on('connect', () => {
       client.subscribeAsGuest();
       client.sendJoin({ id: me.id, name: me.name });
-      // retry a few times in case the host wasn't subscribed yet
       let tries = 0;
       const iv = setInterval(() => {
         tries++;
@@ -188,13 +270,70 @@ export default function App() {
     setScreen('lobby');
   }, [codeInput, flash]);
 
-  // ---------- gameplay actions (everyone sends via broker) ----------
-  const send = useCallback((action) => {
-    if (clientRef.current) clientRef.current.sendAction(action);
-  }, []);
+  // ---------- gameplay send ----------
+  const send = useCallback(
+    (action) => {
+      if (modeRef.current === 'solo') applyLocal(action);
+      else if (clientRef.current) clientRef.current.sendAction(action);
+    },
+    [applyLocal]
+  );
 
   const view = gameState ? publicView(gameState, meRef.current.id) : null;
   const myTurn = view && view.currentPlayerId === meRef.current.id && view.status === 'playing';
+
+  // ---------- FX + cash detection ----------
+  useEffect(() => {
+    if (!gameState) return;
+    const meId = meRef.current.id;
+    const v = publicView(gameState, meId);
+    const prev = prevRef.current;
+    const myCount = v.yourHand.length;
+
+    if (prev.topId !== null && v.status === 'playing') {
+      const topChanged = v.top && v.top.id !== prev.topId;
+      const delta = myCount - prev.myCount;
+      const isPlus = topChanged && v.top && (v.top.value === 'draw2' || v.top.value === 'wild4');
+      if (isPlus) {
+        triggerFx({ type: 'plus', value: v.top.value, toMe: delta > 0 });
+        haptic('heavy');
+      } else if (delta > 0) {
+        triggerFx({ type: 'draw', n: delta });
+        haptic('light');
+      }
+    }
+
+    if (v.status === 'finished' && !prev.finished) {
+      if (v.winner === meId && !rewardAppliedRef.current) {
+        rewardAppliedRef.current = true;
+        addBalance(v.reward).then(setBalance);
+        haptic('success');
+      } else {
+        haptic('light');
+      }
+    }
+
+    prevRef.current = { topId: v.top ? v.top.id : null, myCount, finished: v.status === 'finished' };
+  }, [gameState, triggerFx]);
+
+  const confirmLeave = useCallback(() => {
+    Alert.alert('Quitter la partie ?', 'Tu vas revenir au menu principal.', [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Quitter', style: 'destructive', onPress: () => leave() },
+    ]);
+  }, []);
+
+  const leave = useCallback(() => {
+    cleanup();
+    setGameState(null);
+    setRole(null);
+    roleRef.current = null;
+    modeRef.current = null;
+    setMode(null);
+    setFx(null);
+    setLobby({ players: [], hostId: null, started: false });
+    setScreen('home');
+  }, [cleanup]);
 
   const onPlayCard = useCallback(
     (card) => {
@@ -206,6 +345,7 @@ export default function App() {
         flash('Carte non jouable.');
         return;
       }
+      haptic('light');
       if (card.value === 'wild' || card.value === 'wild4') {
         setColorPickFor(card.id);
         return;
@@ -223,23 +363,11 @@ export default function App() {
     [colorPickFor, send]
   );
 
-  const leave = useCallback(() => {
-    cleanup();
-    setGameState(null);
-    setRole(null);
-    roleRef.current = null;
-    setLobby({ players: [], hostId: null, started: false });
-    setScreen('home');
-  }, [cleanup]);
-
   // ================= RENDER =================
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="light-content" backgroundColor={theme.bg} />
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <StatusBar barStyle="light-content" backgroundColor="#0b0e22" />
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {screen === 'home' && (
           <HomeScreen
             name={name}
@@ -248,6 +376,10 @@ export default function App() {
             setCodeInput={setCodeInput}
             onHost={hostGame}
             onJoin={joinGame}
+            onSolo={startSolo}
+            bots={bots}
+            setBots={setBots}
+            balance={balance}
           />
         )}
 
@@ -259,7 +391,7 @@ export default function App() {
             lobby={lobby}
             meId={meRef.current.id}
             onStart={startGame}
-            onLeave={leave}
+            onLeave={confirmLeave}
           />
         )}
 
@@ -268,233 +400,314 @@ export default function App() {
             view={view}
             meId={meRef.current.id}
             myTurn={myTurn}
+            mode={mode}
             role={role}
             status={status}
             onPlay={onPlayCard}
             onDraw={() => send({ type: 'draw', playerId: meRef.current.id })}
             onPass={() => send({ type: 'pass', playerId: meRef.current.id })}
-            onNewRound={newRound}
-            onLeave={leave}
+            onLeave={confirmLeave}
           />
         )}
 
+        {screen === 'game' && view && view.status === 'finished' && (
+          <WinOverlay
+            iWon={view.winner === meRef.current.id}
+            winnerName={(view.players.find((p) => p.id === view.winner) || {}).name}
+            reward={view.reward}
+            balance={balance}
+            canNext={mode === 'solo' || role === 'host'}
+            onNext={newRound}
+            onQuit={leave}
+          />
+        )}
+
+        {fx && <FxLayer key={fxKey} fx={fx} onDone={() => setFx(null)} />}
         {colorPickFor && <ColorPicker onPick={chooseColor} onCancel={() => setColorPickFor(null)} />}
         {toast ? (
-          <View style={styles.toast}>
+          <View style={styles.toast} pointerEvents="none">
             <Text style={styles.toastText}>{toast}</Text>
           </View>
         ) : null}
+
+        {intro && <IntroSplash onDone={() => setIntro(false)} />}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-// ---------------- Screens ----------------
-
-function HomeScreen({ name, setName, codeInput, setCodeInput, onHost, onJoin }) {
+// ---------------- Home ----------------
+function HomeScreen({ name, setName, codeInput, setCodeInput, onHost, onJoin, onSolo, bots, setBots, balance }) {
   return (
-    <ScrollView contentContainerStyle={styles.home}>
-      <Text style={styles.logo}>UNO</Text>
-      <Text style={styles.tagline}>Joue avec tes amis · rejoins avec un code</Text>
+    <LinearGradient colors={GRAD.home} style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.home}>
+        <View style={styles.walletChip}>
+          <Text style={styles.walletText}>💰 {balance}$</Text>
+        </View>
 
-      <Text style={styles.label}>Ton pseudo</Text>
-      <TextInput
-        style={styles.input}
-        value={name}
-        onChangeText={setName}
-        placeholder="Ton pseudo"
-        placeholderTextColor={theme.sub}
-        maxLength={16}
-      />
+        <View style={styles.logoWrap}>
+          <UnoLogo size={72} />
+        </View>
+        <Text style={styles.tagline}>Joue avec tes amis · rejoins avec un code</Text>
 
-      <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={onHost}>
-        <Text style={styles.btnText}>Créer une partie</Text>
-      </TouchableOpacity>
+        <Text style={styles.label}>Ton pseudo</Text>
+        <TextInput
+          style={styles.input}
+          value={name}
+          onChangeText={setName}
+          placeholder="Ton pseudo"
+          placeholderTextColor={theme.sub}
+          maxLength={16}
+        />
 
-      <View style={styles.divider}>
-        <View style={styles.line} />
-        <Text style={styles.dividerText}>ou</Text>
-        <View style={styles.line} />
-      </View>
+        <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={onHost}>
+          <Text style={styles.btnText}>Créer une partie</Text>
+        </TouchableOpacity>
 
-      <Text style={styles.label}>Rejoindre avec un code</Text>
-      <TextInput
-        style={[styles.input, styles.codeInput]}
-        value={codeInput}
-        onChangeText={(t) => setCodeInput(t.toUpperCase())}
-        placeholder="EX: K7P2M"
-        placeholderTextColor={theme.sub}
-        autoCapitalize="characters"
-        maxLength={6}
-      />
-      <TouchableOpacity style={[styles.btn, styles.btnGreen]} onPress={onJoin}>
-        <Text style={styles.btnText}>Rejoindre</Text>
-      </TouchableOpacity>
+        <Text style={styles.label}>Rejoindre avec un code</Text>
+        <TextInput
+          style={[styles.input, styles.codeInput]}
+          value={codeInput}
+          onChangeText={(t) => setCodeInput(t.toUpperCase())}
+          placeholder="EX: K7P2M"
+          placeholderTextColor={theme.sub}
+          autoCapitalize="characters"
+          maxLength={6}
+        />
+        <TouchableOpacity style={[styles.btn, styles.btnGreen]} onPress={onJoin}>
+          <Text style={styles.btnText}>Rejoindre</Text>
+        </TouchableOpacity>
 
-      <Text style={styles.footer}>Aucun compte requis · réseau public</Text>
-    </ScrollView>
+        <View style={styles.divider}>
+          <View style={styles.line} />
+          <Text style={styles.dividerText}>solo · entraînement</Text>
+          <View style={styles.line} />
+        </View>
+
+        <View style={styles.soloRow}>
+          <Text style={styles.label}>Bots :</Text>
+          {[1, 2, 3].map((n) => (
+            <TouchableOpacity
+              key={n}
+              style={[styles.botPick, bots === n && styles.botPickOn]}
+              onPress={() => setBots(n)}
+            >
+              <Text style={[styles.botPickText, bots === n && styles.botPickTextOn]}>{n}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <TouchableOpacity style={[styles.btn, styles.btnBlue]} onPress={onSolo}>
+          <Text style={styles.btnText}>Jouer en solo (vs bots)</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.footer}>Aucun compte requis · réseau public</Text>
+      </ScrollView>
+    </LinearGradient>
   );
 }
 
+// ---------------- Lobby ----------------
 function LobbyScreen({ code, role, status, lobby, meId, onStart, onLeave }) {
   return (
-    <View style={styles.container}>
-      <TopBar title="Salon" status={status} onLeave={onLeave} />
-      <View style={styles.codeBox}>
-        <Text style={styles.codeLabel}>Code de la partie</Text>
-        <Text style={styles.codeBig}>{code}</Text>
-        <Text style={styles.codeHint}>Partage ce code pour que tes amis rejoignent</Text>
-      </View>
+    <LinearGradient colors={GRAD.home} style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <TopBar title="Salon" status={status} onLeave={onLeave} />
+        <View style={styles.codeBox}>
+          <Text style={styles.codeLabel}>Code de la partie</Text>
+          <Text style={styles.codeBig}>{code}</Text>
+          <Text style={styles.codeHint}>Partage ce code pour que tes amis rejoignent</Text>
+        </View>
 
-      <Text style={styles.sectionTitle}>Joueurs ({lobby.players.length})</Text>
-      <ScrollView style={{ flex: 1 }}>
-        {lobby.players.map((p) => (
-          <View key={p.id} style={styles.playerRow}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{(p.name || '?').slice(0, 1).toUpperCase()}</Text>
+        <Text style={styles.sectionTitle}>Joueurs ({lobby.players.length})</Text>
+        <ScrollView style={{ flex: 1 }}>
+          {lobby.players.map((p) => (
+            <View key={p.id} style={styles.playerRow}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{(p.name || '?').slice(0, 1).toUpperCase()}</Text>
+              </View>
+              <Text style={styles.playerName}>{p.name}</Text>
+              {p.id === lobby.hostId ? <Text style={styles.hostTag}>hôte</Text> : null}
+              {p.id === meId ? <Text style={styles.youTag}>toi</Text> : null}
             </View>
-            <Text style={styles.playerName}>{p.name}</Text>
-            {p.id === lobby.hostId ? <Text style={styles.hostTag}>hôte</Text> : null}
-            {p.id === meId ? <Text style={styles.youTag}>toi</Text> : null}
-          </View>
-        ))}
-        {lobby.players.length < 2 ? (
-          <Text style={styles.waiting}>En attente de joueurs…</Text>
-        ) : null}
-      </ScrollView>
+          ))}
+          {lobby.players.length < 2 ? <Text style={styles.waiting}>En attente de joueurs…</Text> : null}
+        </ScrollView>
 
-      {role === 'host' ? (
-        <TouchableOpacity
-          style={[styles.btn, lobby.players.length >= 2 ? styles.btnPrimary : styles.btnDisabled]}
-          onPress={onStart}
-          disabled={lobby.players.length < 2}
-        >
-          <Text style={styles.btnText}>Lancer la partie</Text>
+        {role === 'host' ? (
+          <TouchableOpacity
+            style={[styles.btn, lobby.players.length >= 2 ? styles.btnPrimary : styles.btnDisabled]}
+            onPress={onStart}
+            disabled={lobby.players.length < 2}
+          >
+            <Text style={styles.btnText}>Lancer la partie</Text>
+          </TouchableOpacity>
+        ) : (
+          <Text style={styles.waiting}>L'hôte va lancer la partie…</Text>
+        )}
+        <TouchableOpacity style={[styles.btn, styles.btnGhost]} onPress={onLeave}>
+          <Text style={styles.btnGhostText}>Quitter</Text>
         </TouchableOpacity>
-      ) : (
-        <Text style={styles.waiting}>L'hôte va lancer la partie…</Text>
-      )}
-    </View>
+      </View>
+    </LinearGradient>
   );
 }
 
-function GameScreen({ view, meId, myTurn, role, status, onPlay, onDraw, onPass, onNewRound, onLeave }) {
+// ---------------- Game ----------------
+function GameScreen({ view, meId, myTurn, mode, role, status, onPlay, onDraw, onPass, onLeave }) {
   const finished = view.status === 'finished';
-  const winnerName = finished
-    ? (view.players.find((p) => p.id === view.winner) || {}).name
-    : null;
   const dirArrow = view.direction === 1 ? '↻' : '↺';
 
+  // deal-in animation
+  const dealt = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(dealt, { toValue: 1, duration: 500, delay: 150, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, []);
+
+  // discard pop on top change
+  const discardPop = useRef(new Animated.Value(1)).current;
+  const topId = view.top && view.top.id;
+  const prevTop = useRef(topId);
+  useEffect(() => {
+    if (prevTop.current !== topId) {
+      prevTop.current = topId;
+      discardPop.setValue(0.55);
+      Animated.spring(discardPop, { toValue: 1, friction: 4, tension: 130, useNativeDriver: true }).start();
+    }
+  }, [topId]);
+
+  // turn pulse
+  const pulse = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    let loop;
+    if (myTurn && !finished) {
+      loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulse, { toValue: 1, duration: 750, useNativeDriver: false }),
+          Animated.timing(pulse, { toValue: 0, duration: 750, useNativeDriver: false }),
+        ])
+      );
+      loop.start();
+    } else {
+      pulse.setValue(0);
+    }
+    return () => loop && loop.stop();
+  }, [myTurn, finished]);
+
+  const handStyle = {
+    opacity: dealt,
+    transform: [{ translateY: dealt.interpolate({ inputRange: [0, 1], outputRange: [140, 0] }) }],
+  };
+
   return (
-    <View style={styles.container}>
-      <TopBar title="UNO" status={status} onLeave={onLeave} />
+    <LinearGradient colors={GRAD.table} style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <TopBar title="UNO" status={mode === 'solo' ? 'solo' : status} onLeave={onLeave} logo />
 
-      {/* opponents */}
-      <View style={styles.opponents}>
-        {view.players
-          .filter((p) => p.id !== meId)
-          .map((p) => {
-            const active = p.id === view.currentPlayerId && !finished;
-            return (
-              <View key={p.id} style={[styles.oppChip, active && styles.oppActive]}>
-                <Text style={styles.oppName} numberOfLines={1}>
-                  {p.name}
-                </Text>
-                <Text style={styles.oppCount}>🂠 {p.count}</Text>
-                {p.count === 1 ? <Text style={styles.unoBadge}>UNO!</Text> : null}
+        {/* opponents */}
+        <View style={styles.opponents}>
+          {view.players
+            .filter((p) => p.id !== meId)
+            .map((p) => {
+              const active = p.id === view.currentPlayerId && !finished;
+              return (
+                <View key={p.id} style={[styles.oppChip, active && styles.oppActive]}>
+                  <Text style={styles.oppName} numberOfLines={1}>
+                    {p.name}
+                  </Text>
+                  <View style={styles.oppCards}>
+                    <Card faceDown small />
+                    <Text style={styles.oppCount}>×{p.count}</Text>
+                  </View>
+                  {p.count === 1 ? <Text style={styles.unoBadge}>UNO!</Text> : null}
+                </View>
+              );
+            })}
+        </View>
+
+        {/* table */}
+        <View style={styles.table}>
+          <TouchableOpacity onPress={myTurn && !finished ? onDraw : undefined} activeOpacity={0.85}>
+            <View style={styles.deckStack}>
+              <Card faceDown />
+              <View style={styles.deckBadge}>
+                <Text style={styles.deckBadgeText}>{view.drawCount}</Text>
               </View>
-            );
-          })}
-      </View>
+            </View>
+          </TouchableOpacity>
 
-      {/* table */}
-      <View style={styles.table}>
-        <TouchableOpacity onPress={myTurn && !finished ? onDraw : undefined} activeOpacity={0.8}>
-          <View style={styles.deckBack}>
-            <Text style={styles.deckText}>UNO</Text>
-            <Text style={styles.deckCount}>{view.drawCount}</Text>
+          <View style={styles.centerInfo}>
+            <View style={[styles.colorDot, { backgroundColor: CARD_COLORS[view.currentColor] || '#888' }]} />
+            <Text style={styles.dir}>{dirArrow}</Text>
           </View>
-        </TouchableOpacity>
 
-        <View style={styles.centerInfo}>
-          <View style={[styles.colorDot, { backgroundColor: CARD_COLORS[view.currentColor] || '#888' }]} />
-          <Text style={styles.dir}>{dirArrow}</Text>
+          <Animated.View style={{ transform: [{ scale: discardPop }] }}>
+            <Card card={view.top} />
+          </Animated.View>
         </View>
 
-        <View>
-          <Card card={view.top} />
-        </View>
-      </View>
-
-      {/* turn banner */}
-      {!finished ? (
-        <Text style={[styles.turnBanner, myTurn && styles.turnMine]}>
-          {myTurn
+        {/* turn banner */}
+        <Animated.Text
+          style={[
+            styles.turnBanner,
+            myTurn && styles.turnMine,
+            myTurn && !finished
+              ? { opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] }) }
+              : null,
+          ]}
+        >
+          {finished
+            ? ' '
+            : myTurn
             ? view.awaitingPlay
               ? 'Joue une carte ou passe'
               : '🟢 À toi de jouer !'
             : `Tour de ${(view.players.find((p) => p.id === view.currentPlayerId) || {}).name || '…'}`}
-        </Text>
-      ) : (
-        <View style={styles.winBox}>
-          <Text style={styles.winText}>🏆 {winnerName} gagne !</Text>
+        </Animated.Text>
+
+        {/* log */}
+        <View style={styles.logBox}>
+          {view.log.slice(-2).map((l, i) => (
+            <Text key={i} style={styles.logLine} numberOfLines={1}>
+              {l}
+            </Text>
+          ))}
         </View>
-      )}
 
-      {/* log */}
-      <View style={styles.logBox}>
-        {view.log.slice(-2).map((l, i) => (
-          <Text key={i} style={styles.logLine} numberOfLines={1}>
-            {l}
-          </Text>
-        ))}
+        {/* my hand */}
+        <Animated.View style={[styles.handWrap, handStyle]}>
+          <View style={styles.handHeader}>
+            <Text style={styles.handTitle}>
+              Ta main ({view.yourHand.length}){view.yourHand.length === 1 ? '  ·  UNO !' : ''}
+            </Text>
+            {myTurn && view.awaitingPlay ? (
+              <TouchableOpacity style={styles.passBtn} onPress={onPass}>
+                <Text style={styles.passText}>Passer</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hand}>
+            {view.yourHand.map((c) => {
+              const playable = myTurn && !finished && canPlayLocal(c, view);
+              return (
+                <View key={c.id} style={styles.handCard}>
+                  <Card card={c} onPress={() => onPlay(c)} dim={myTurn && !playable} />
+                </View>
+              );
+            })}
+            {view.yourHand.length === 0 ? (
+              <Text style={styles.waiting}>{finished ? 'Manche terminée' : 'Tu es spectateur'}</Text>
+            ) : null}
+          </ScrollView>
+        </Animated.View>
       </View>
-
-      {/* my hand */}
-      <View style={styles.handWrap}>
-        <View style={styles.handHeader}>
-          <Text style={styles.handTitle}>
-            Ta main ({view.yourHand.length}){view.yourHand.length === 1 ? '  ·  UNO !' : ''}
-          </Text>
-          {myTurn && view.awaitingPlay ? (
-            <TouchableOpacity style={styles.passBtn} onPress={onPass}>
-              <Text style={styles.passText}>Passer</Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hand}>
-          {view.yourHand.map((c) => {
-            const playable = myTurn && !finished && canPlayLocal(c, view);
-            return (
-              <View key={c.id} style={styles.handCard}>
-                <Card card={c} onPress={() => onPlay(c)} dim={myTurn && !playable} />
-              </View>
-            );
-          })}
-          {view.yourHand.length === 0 ? (
-            <Text style={styles.waiting}>{finished ? 'Partie terminée' : 'Tu es spectateur'}</Text>
-          ) : null}
-        </ScrollView>
-      </View>
-
-      {finished && role === 'host' ? (
-        <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={onNewRound}>
-          <Text style={styles.btnText}>Nouvelle manche</Text>
-        </TouchableOpacity>
-      ) : null}
-      {finished && role !== 'host' ? (
-        <Text style={styles.waiting}>L'hôte peut lancer une nouvelle manche.</Text>
-      ) : null}
-    </View>
+    </LinearGradient>
   );
 }
 
-// local playability check using the public view's top+color
 function canPlayLocal(card, view) {
   if (card.value === 'wild' || card.value === 'wild4') return true;
   if (card.color === view.currentColor) return true;
-  if (view.top && card.value === view.top.value && card.color !== null && view.top.color !== null)
-    return true;
+  if (view.top && card.value === view.top.value && card.color !== null && view.top.color !== null) return true;
   return false;
 }
 
@@ -505,11 +718,7 @@ function ColorPicker({ onPick, onCancel }) {
         <Text style={styles.modalTitle}>Choisis une couleur</Text>
         <View style={styles.colorGrid}>
           {COLORS.map((c) => (
-            <TouchableOpacity
-              key={c}
-              style={[styles.colorTile, { backgroundColor: CARD_COLORS[c] }]}
-              onPress={() => onPick(c)}
-            />
+            <TouchableOpacity key={c} style={[styles.colorTile, { backgroundColor: CARD_COLORS[c] }]} onPress={() => onPick(c)} />
           ))}
         </View>
         <TouchableOpacity onPress={onCancel}>
@@ -520,15 +729,19 @@ function ColorPicker({ onPick, onCancel }) {
   );
 }
 
-function TopBar({ title, status, onLeave }) {
+function TopBar({ title, status, onLeave, logo }) {
   const dot =
-    status === 'connected' ? theme.ok : status === 'offline' || status === 'error' ? theme.danger : theme.accent;
+    status === 'connected' || status === 'solo'
+      ? theme.ok
+      : status === 'offline' || (status && status.startsWith('error'))
+      ? theme.danger
+      : theme.accent;
   return (
     <View style={styles.topbar}>
       <TouchableOpacity onPress={onLeave} style={styles.leaveBtn}>
         <Text style={styles.leaveText}>✕</Text>
       </TouchableOpacity>
-      <Text style={styles.topTitle}>{title}</Text>
+      {logo ? <UnoLogo size={26} tilt={-8} /> : <Text style={styles.topTitle}>{title}</Text>}
       <View style={styles.statusWrap}>
         <View style={[styles.statusDot, { backgroundColor: dot }]} />
       </View>
@@ -538,39 +751,32 @@ function TopBar({ title, status, onLeave }) {
 
 // ---------------- Styles ----------------
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: theme.bg },
+  safe: { flex: 1, backgroundColor: '#0b0e22' },
   container: { flex: 1, padding: 14 },
-  home: { padding: 24, paddingTop: 60, alignItems: 'stretch' },
-  logo: {
-    fontSize: 72,
-    fontWeight: '900',
-    color: theme.accent,
-    textAlign: 'center',
-    letterSpacing: 4,
-    textShadowColor: theme.danger,
-    textShadowOffset: { width: 3, height: 3 },
-    textShadowRadius: 0,
-  },
-  tagline: { color: theme.sub, textAlign: 'center', marginBottom: 30, marginTop: 4 },
+  home: { padding: 24, paddingTop: 40, alignItems: 'stretch' },
+  walletChip: { alignSelf: 'flex-end', backgroundColor: 'rgba(245,197,24,0.14)', borderColor: theme.accent, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
+  walletText: { color: theme.accent, fontWeight: '900', fontSize: 15 },
+  logoWrap: { alignItems: 'center', marginTop: 18, marginBottom: 8 },
+  tagline: { color: theme.sub, textAlign: 'center', marginBottom: 22 },
   label: { color: theme.text, fontWeight: '700', marginBottom: 8, marginTop: 12 },
-  input: {
-    backgroundColor: theme.panel,
-    color: theme.text,
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: theme.border,
-  },
+  input: { backgroundColor: theme.panel, color: theme.text, borderRadius: 12, padding: 14, fontSize: 16, borderWidth: 1, borderColor: theme.border },
   codeInput: { fontSize: 24, fontWeight: '800', letterSpacing: 6, textAlign: 'center' },
   btn: { borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 16 },
   btnPrimary: { backgroundColor: theme.danger },
   btnGreen: { backgroundColor: theme.ok },
+  btnBlue: { backgroundColor: '#2277CC' },
   btnDisabled: { backgroundColor: theme.panel2 },
+  btnGhost: { borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)', marginTop: 10 },
+  btnGhostText: { color: theme.sub, fontWeight: '700' },
   btnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
   divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 22 },
   line: { flex: 1, height: 1, backgroundColor: theme.border },
-  dividerText: { color: theme.sub, marginHorizontal: 12 },
+  dividerText: { color: theme.sub, marginHorizontal: 12, fontSize: 12 },
+  soloRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  botPick: { width: 44, height: 44, borderRadius: 12, backgroundColor: theme.panel, borderWidth: 1, borderColor: theme.border, alignItems: 'center', justifyContent: 'center' },
+  botPickOn: { backgroundColor: '#2277CC', borderColor: '#5aa0e0' },
+  botPickText: { color: theme.sub, fontWeight: '900', fontSize: 18 },
+  botPickTextOn: { color: '#fff' },
   footer: { color: theme.sub, textAlign: 'center', marginTop: 26, fontSize: 12 },
 
   topbar: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
@@ -595,24 +801,23 @@ const styles = StyleSheet.create({
   waiting: { color: theme.sub, textAlign: 'center', marginVertical: 12 },
 
   opponents: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginBottom: 6 },
-  oppChip: { backgroundColor: theme.panel, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, alignItems: 'center', borderWidth: 2, borderColor: 'transparent', minWidth: 84 },
+  oppChip: { backgroundColor: theme.panel, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, alignItems: 'center', borderWidth: 2, borderColor: 'transparent', minWidth: 90 },
   oppActive: { borderColor: theme.accent },
   oppName: { color: theme.text, fontWeight: '700', maxWidth: 90 },
-  oppCount: { color: theme.sub, marginTop: 2 },
+  oppCards: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  oppCount: { color: theme.sub, fontWeight: '800' },
   unoBadge: { color: theme.danger, fontWeight: '900', fontSize: 11, marginTop: 2 },
 
   table: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 22, marginVertical: 14 },
-  deckBack: { width: 74, height: 108, borderRadius: 12, backgroundColor: '#111421', borderWidth: 3, borderColor: 'rgba(255,255,255,0.9)', justifyContent: 'center', alignItems: 'center' },
-  deckText: { color: theme.accent, fontWeight: '900', transform: [{ rotate: '-20deg' }], fontSize: 20 },
-  deckCount: { color: theme.sub, position: 'absolute', bottom: 6, fontSize: 12 },
+  deckStack: { position: 'relative' },
+  deckBadge: { position: 'absolute', bottom: -6, right: -6, backgroundColor: '#0b0e22', borderColor: theme.accent, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2 },
+  deckBadgeText: { color: theme.accent, fontWeight: '800', fontSize: 12 },
   centerInfo: { alignItems: 'center', gap: 6 },
   colorDot: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: '#fff' },
   dir: { color: theme.text, fontSize: 26 },
 
-  turnBanner: { textAlign: 'center', color: theme.sub, fontWeight: '700', marginBottom: 4 },
+  turnBanner: { textAlign: 'center', color: theme.sub, fontWeight: '700', marginBottom: 4, minHeight: 20 },
   turnMine: { color: theme.ok, fontSize: 16 },
-  winBox: { alignItems: 'center', marginVertical: 6 },
-  winText: { color: theme.accent, fontSize: 22, fontWeight: '900' },
 
   logBox: { minHeight: 34, marginBottom: 4 },
   logLine: { color: theme.sub, fontSize: 12, textAlign: 'center' },

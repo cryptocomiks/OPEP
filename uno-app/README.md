@@ -22,6 +22,21 @@ Puis :
 > Astuce Termux : si le QR ne se scanne pas, appuie sur `s` pour basculer en
 > « Expo Go », et utilise le lien `exp://…` affiché.
 
+## ✨ Fonctionnalités
+
+- **Intro animée** : logo UNO + cartes qui s'ouvrent/se referment en éventail.
+- **Mode solo (vs bots)** : joue seul contre 1 à 3 bots à stratégie
+  **déterministe** — pratique pour tester/débugger sans plusieurs téléphones.
+- **Multijoueur par code** : crée une partie, partage le code, les autres
+  rejoignent.
+- **Animations** : cartes qui volent vers ta main à la pioche, effet **+2 / +4**
+  plein écran avec secousse et vibration (haptique), rebond de la défausse,
+  pulsation quand c'est ton tour, cartes distribuées en fondu.
+- **Cash 💰** : à chaque manche gagnée tu remportes du cash (barème UNO :
+  chiffres = valeur, actions = 20, jokers = 50, + bonus). Solde **persistant**
+  (sauvegardé sur l'appareil), compteur animé sur l'écran de victoire.
+- **Boutons Quitter** partout (avec confirmation).
+
 ## 🎮 Comment jouer
 
 1. **Un joueur** crée la partie → il obtient un **code** (ex. `K7P2M`).
