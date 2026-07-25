@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#2A211C">
-<title>📸 La Sneakerie — scanne tes paires</title>
+<title>📸 SNEAKIII — scanne tes paires</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -209,7 +209,10 @@ body::after{
 .setup button{background:var(--coral);color:#fff;border:none;font-family:var(--fun);font-weight:600;padding:11px 16px;border-radius:11px;cursor:pointer}
 .setup .ok{color:var(--teal-d);font-weight:600}
 .setup .adv{margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--brown3)}
-.setup .adv select{font-family:var(--mono);font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid rgba(42,33,28,.2);background:#fff}
+.setup .adv select{font-family:var(--mono);font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid rgba(42,33,28,.2);background:#fff;max-width:100%}
+.setup .cost{margin-top:6px;font-family:var(--mono);font-size:10px;color:var(--teal-d)}
+.eco-row{display:flex;align-items:center;gap:8px;margin-top:11px;font-size:12px;color:var(--brown2);cursor:pointer}
+.eco-row input{width:18px;height:18px;accent-color:var(--coral);flex:0 0 auto}
 
 /* toast */
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(80px);background:var(--brown);color:#f6ecd9;font-size:13px;font-weight:500;padding:12px 20px;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,.4);z-index:9999;opacity:0;transition:.35s cubic-bezier(.2,1.3,.4,1);max-width:88%;text-align:center}
@@ -254,6 +257,32 @@ body::after{
 .pp-item.none{display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--brown3)}
 .pp-empty{font-size:12px;color:var(--brown3);padding:6px 2px}
 .share-av{width:100%;margin-top:4px;background:linear-gradient(180deg,var(--teal),var(--teal-d));color:#fff;border:none;font-family:var(--fun);font-weight:600;font-size:14px;padding:13px;border-radius:13px;cursor:pointer;box-shadow:0 4px 10px rgba(31,110,104,.4)}
+.perso-actions{display:flex;gap:9px;margin-bottom:16px}
+.pa-btn{flex:1;border:none;font-family:var(--fun);font-weight:600;font-size:12.5px;padding:12px 8px;border-radius:12px;cursor:pointer;line-height:1.2}
+.pa-btn.photo{background:var(--brown);color:#f6ecd9}
+.pa-btn.shop{background:linear-gradient(180deg,var(--mustard),#cf9021);color:#3a2413}
+.pa-btn:active{transform:scale(.96)}
+.outfit-chip{position:relative}
+.outfit-chip.locked{opacity:.5}
+.outfit-chip .lock{font-size:10px}
+
+/* SHOP */
+.shop-sheet{max-width:420px;max-height:88vh;overflow-y:auto}
+.shop-head{font-family:var(--fun);font-weight:700;font-size:18px;color:var(--brown);margin:4px 0 14px}
+.shop-head small{display:block;font-family:var(--mono);font-size:9px;color:var(--brown3);font-weight:400;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.shop-item{display:flex;gap:12px;align-items:center;background:#fff;border-radius:16px;padding:11px;margin-bottom:11px;box-shadow:0 3px 9px var(--shadow)}
+.shop-thumb{width:76px;height:76px;flex:0 0 76px;border-radius:12px;overflow:hidden;background:linear-gradient(135deg,#F4E7D2,#e6d3b2);display:flex;align-items:center;justify-content:center;font-size:34px}
+.shop-thumb img{width:100%;height:100%;object-fit:cover}
+.shop-info{flex:1;min-width:0}
+.shop-name{font-weight:600;font-size:14px;color:var(--brown)}
+.shop-tag{font-family:var(--mono);font-size:9px;color:var(--coral-d);background:rgba(234,92,59,.12);display:inline-block;padding:1px 7px;border-radius:20px;margin-top:3px}
+.shop-desc{font-size:11px;color:var(--brown3);margin-top:4px;line-height:1.4}
+.shop-buy{margin-top:8px;display:flex;align-items:center;gap:8px}
+.shop-price{font-family:var(--fun);font-weight:700;font-size:16px;color:var(--brown)}
+.buy-btn{background:linear-gradient(180deg,var(--teal),var(--teal-d));color:#fff;border:none;font-family:var(--fun);font-weight:600;font-size:12px;padding:8px 14px;border-radius:10px;cursor:pointer}
+.buy-btn.owned{background:rgba(76,175,125,.18);color:#2d6a4f;cursor:default}
+.gen-one{background:transparent;border:1px solid rgba(42,33,28,.2);color:var(--brown3);font-family:var(--fun);font-size:11px;padding:7px 10px;border-radius:9px;cursor:pointer}
+.gen-all{width:100%;margin-top:6px;background:var(--brown);color:#f6ecd9;border:none;font-family:var(--fun);font-weight:600;font-size:13px;padding:12px;border-radius:12px;cursor:pointer}
 
 /* ═════ LIGUE ═════ */
 .league-card{background:linear-gradient(165deg,#33261d,#211913);border-radius:20px;padding:16px;box-shadow:0 12px 28px var(--shadow);margin-bottom:14px;color:#f6ecd9}
@@ -303,7 +332,7 @@ input[type=file]{display:none}
 <body>
 <div class="app">
 
-  <div class="brand"><span class="logo">📸</span><h1>La <span>Sneakerie</span></h1></div>
+  <div class="brand"><span class="logo">📸</span><h1>SNEAK<span>III</span></h1></div>
   <div class="tagline">scanne · détoure · collectionne</div>
 
   <div class="tabs">
@@ -316,17 +345,19 @@ input[type=file]{display:none}
   <!-- SETUP (key) -->
   <div class="setup" id="setup" style="display:none">
     <h3>🔑 Connecte ta magie Gemini</h3>
-    <p>Colle ta clé API Gemini. Elle reste <b>uniquement dans ce navigateur</b> (localStorage) — elle n'est jamais envoyée sur le repo ni partagée.</p>
+    <p>Colle ta clé API Gemini. Elle reste <b>uniquement dans ce navigateur</b> (localStorage) — jamais envoyée sur le repo ni partagée.</p>
     <div class="row">
       <input id="keyInput" type="password" placeholder="Clé API Gemini…" autocomplete="off" spellcheck="false">
       <button id="keySave">OK</button>
     </div>
-    <div class="adv">Modèle :
+    <label class="eco-row"><input type="checkbox" id="ecoChk"> <span>💸 <b>Mode éco</b> — filtre local sans IA (0 €, pas de vérif auto)</span></label>
+    <div class="adv">Génération :
       <select id="modelSel">
-        <option value="gemini-2.5-flash-image">gemini-2.5-flash-image (recommandé)</option>
+        <option value="gemini-2.5-flash-image">gemini-2.5-flash-image · ~3,6 ct/paire (recommandé)</option>
         <option value="gemini-2.5-flash-image-preview">gemini-2.5-flash-image-preview</option>
         <option value="gemini-2.0-flash-preview-image-generation">gemini-2.0-flash-preview-image-generation</option>
       </select>
+      <div class="cost">≈ 3,6 centimes par paire · vérif « c'est bien une paire ? » quasi gratuite (flash-lite)</div>
     </div>
   </div>
 
@@ -414,6 +445,14 @@ input[type=file]{display:none}
     </div>
 
     <div class="customizer">
+      <div class="perso-actions">
+        <button class="pa-btn photo" id="persoFromPhoto">📸 Mon perso depuis une photo</button>
+        <button class="pa-btn shop" id="openShop">🛍️ Boutique</button>
+      </div>
+      <div class="opt-group" id="outfitGroup">
+        <h4>✨ Tenue éditions limitées</h4>
+        <div class="styles" id="outfitRow"></div>
+      </div>
       <div class="opt-group">
         <h4>👟 Paire aux pieds</h4>
         <div class="pair-picker" id="pairPicker"></div>
@@ -466,6 +505,17 @@ input[type=file]{display:none}
   </div>
 </div>
 
+<!-- SHOP MODAL -->
+<div class="modal" id="shopModal">
+  <div class="sheet shop-sheet">
+    <button class="x" id="shopX">✕</button>
+    <div class="shop-head">🛍️ Éditions limitées <small>paiement simulé — aucun vrai débit</small></div>
+    <div id="shopList"></div>
+    <button class="gen-all" id="genAll">✨ Générer les 3 aperçus avec l'IA (~0,12 €)</button>
+  </div>
+</div>
+
+<input type="file" id="selfieInput" accept="image/*" capture="user">
 <div class="toast" id="toast"></div>
 
 <script>
@@ -484,13 +534,18 @@ function load(){ try{return JSON.parse(localStorage.getItem(LS_PAIRS))||[]}catch
 function save(){ try{localStorage.setItem(LS_PAIRS,JSON.stringify(pairs))}catch(e){ toast('⚠️ Mémoire pleine, supprime des paires'); } }
 function getKey(){ return localStorage.getItem(LS_KEY)||''; }
 function getModel(){ return localStorage.getItem(LS_MODEL)||'gemini-2.5-flash-image'; }
+function getValModel(){ return 'gemini-2.5-flash-lite'; }
+function getEco(){ return localStorage.getItem('snkr_eco')==='1'; }
+function setEco(v){ localStorage.setItem('snkr_eco', v?'1':'0'); }
 let toastT;
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2600); }
 
 /* ── SETUP / KEY ── */
 function refreshSetup(){
-  $('#setup').style.display = getKey() ? 'none' : 'block';
+  // keep the setup panel visible until a key is set OR éco mode is chosen
+  $('#setup').style.display = (getKey()||getEco()) ? 'none' : 'block';
   $('#modelSel').value = getModel();
+  $('#ecoChk').checked = getEco();
 }
 $('#keySave').onclick=()=>{
   const v=$('#keyInput').value.trim();
@@ -501,6 +556,7 @@ $('#keySave').onclick=()=>{
   refreshSetup();
 };
 $('#modelSel').onchange=e=>localStorage.setItem(LS_MODEL,e.target.value);
+$('#ecoChk').onchange=e=>{ setEco(e.target.checked); toast(e.target.checked?'💸 Mode éco activé (0 €)':'✨ Mode IA activé'); refreshSetup(); };
 
 /* ── TABS ── */
 $$('.tab').forEach(t=>t.onclick=()=>switchTab(t.dataset.tab));
@@ -566,8 +622,22 @@ async function process(srcDataUrl){
   $('#hudMode').textContent='SHOT';
   $('#shutter').disabled=true;
 
+  const useAI = getKey() && !getEco();
   let sticker;
-  if(getKey()){
+
+  if(useAI){
+    // 1) cheap check: is it actually a shoe? (flash-lite ~0,01 ct) — avoids wasting a paid generation
+    showProc('Vérification de la paire…');
+    let verdict;
+    try{ verdict=await geminiIsShoe(srcDataUrl); }
+    catch(e){ verdict={paire:true,unsure:true}; } // fail-open if the check itself errors
+    if(verdict && verdict.paire===false){
+      hideProc(); $('#shutter').disabled=false; resetViewfinder();
+      if(navigator.vibrate) navigator.vibrate([40,60,40]);
+      toast('🚫 Ce n\'est pas une paire de chaussures — vise bien des sneakers 👟');
+      return;
+    }
+    // 2) paid generation only once we know it's a shoe
     showProc('Détourage sticker…');
     try{
       sticker=await geminiSticker(srcDataUrl);
@@ -578,13 +648,22 @@ async function process(srcDataUrl){
       sticker=await localSticker(srcDataUrl);
     }
   }else{
-    // no key → local stylise so the app still works
+    // éco / no key → local stylise (0 €). No auto-check, so ask the user to confirm.
+    if(getKey() && getEco()){
+      if(!confirm('Mode éco : pas de vérification IA.\nEst-ce bien une paire de chaussures ?')){
+        $('#shutter').disabled=false; resetViewfinder(); return;
+      }
+    }
     showProc('Filtre sticker…');
     sticker=await localSticker(srcDataUrl);
   }
   hideProc();
   $('#shutter').disabled=false;
   await addPair(sticker);
+}
+function resetViewfinder(){
+  $('#shot').style.display='none'; $('#hudMode').textContent='LIVE';
+  if(stream) $('#video').style.display='block'; else $('#screenMsg').style.display='flex';
 }
 
 function showProc(t){ setStep(t); $('#proc').classList.add('on'); }
@@ -624,6 +703,38 @@ async function postJson(url,body){
 }
 function splitDataUrl(d){ const m=d.match(/^data:([^;]+);base64,(.*)$/); return m?{mime:m[1],b64:m[2]}:{mime:'image/jpeg',b64:d.split(',')[1]}; }
 
+/* ── Cheap vision JSON call (flash-lite) : validation + selfie analysis ── */
+async function geminiVisionJSON(dataUrl,prompt){
+  const {mime,b64}=splitDataUrl(dataUrl);
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/${getValModel()}:generateContent?key=${encodeURIComponent(getKey())}`;
+  const body={
+    contents:[{role:'user',parts:[{text:prompt},{inlineData:{mimeType:mime,data:b64}}]}],
+    generationConfig:{responseMimeType:'application/json',temperature:0}
+  };
+  const json=await postJson(url,body);
+  if(json.error) throw new Error(json.error.message||'val error');
+  const parts=(((json.candidates||[])[0]||{}).content||{}).parts||[];
+  const txt=(parts.find(p=>p.text)||{}).text||'{}';
+  try{ return JSON.parse(txt); }catch(e){ const m=txt.match(/\{[\s\S]*\}/); return m?JSON.parse(m[0]):{}; }
+}
+async function geminiIsShoe(dataUrl){
+  return geminiVisionJSON(dataUrl,
+    "Tu es un vérificateur. Regarde l'image et réponds STRICTEMENT en JSON: {\"paire\": true|false}. "+
+    "Mets true UNIQUEMENT si le sujet principal est une chaussure / basket / sneaker / paire de chaussures. "+
+    "Mets false pour un visage, une personne, un animal, un objet quelconque ou un paysage.");
+}
+async function geminiSelfieToAvatar(dataUrl){
+  const j=await geminiVisionJSON(dataUrl,
+    "Analyse le visage sur la photo pour créer un avatar cartoon. Réponds STRICTEMENT en JSON: "+
+    "{\"skin\":0-4, \"hair\":0-8, \"style\":0-4, \"glasses\":true|false}. "+
+    "skin: teinte de peau 0=très clair→4=très foncé. "+
+    "hair: couleur cheveux (0 noir,1 brun,2 brun foncé,3 blond foncé,4 blond clair,5 roux,6 violet,7 bleu,8 gris/blanc). "+
+    "style: coiffure (0 court,1 bouclé/frisé,2 chignon/attaché,3 casquette/bonnet,4 long). "+
+    "glasses: lunettes visibles ?");
+  const cl=(v,max)=>Math.max(0,Math.min(max,parseInt(v,10)||0));
+  return {skin:cl(j.skin,4),hair:cl(j.hair,8),style:cl(j.style,4),glasses:!!j.glasses};
+}
+
 /* ── LOCAL FALLBACK sticker (canvas) ── */
 function localSticker(dataUrl){
   return new Promise(res=>{
@@ -660,12 +771,15 @@ function addPair(stickerDataUrl){
   return new Promise(res=>{
     const name = randomName();
     const pair = { id:'p'+Date.now()+Math.floor(performance.now()), name, dataUrl:stickerDataUrl, date:new Date().toISOString(), fresh:true };
+    const before=levelInfo(pairs.length).lvl;
     // fly from screen to the drawer
     flyToDrawer(stickerDataUrl, ()=>{
       pairs.unshift(pair); save(); updateCounts();
-      toast('👟 « '+name+' » rangée dans l\'armoire !');
+      const after=levelInfo(pairs.length).lvl;
+      toast('👟 « '+name+' » rangée dans l\'armoire ! +100 pts');
+      if(after>before){ if(navigator.vibrate)navigator.vibrate([30,50,30,50,60]); setTimeout(()=>toast('🎉 Niveau '+after+' atteint !'),1500); }
       // reset viewfinder to live after a beat
-      setTimeout(()=>{ $('#shot').style.display='none'; $('#hudMode').textContent='LIVE'; if(stream)$('#video').style.display='block'; else $('#screenMsg').style.display='flex'; res(); }, 500);
+      setTimeout(()=>{ resetViewfinder(); res(); }, 500);
     });
   });
 }
@@ -747,7 +861,7 @@ $('#mShare').onclick=()=>{ const p=pairs.find(x=>x.id===openId); if(p)sharePair(
 
 /* ── SHARE (SMS + sticker) ── */
 async function sharePair(p){
-  const msg = `Je viens d'ajouter une paire à ma collection… « ${p.name} » 👟✨ Regarde ma Sneakerie !`;
+  const msg = `Je viens d'ajouter une paire à ma collection… « ${p.name} » 👟✨ Regarde ma collec sur SNEAKIII !`;
   try{
     const blob = await (await fetch(p.dataUrl)).blob();
     const file = new File([blob],'ma-paire.png',{type:blob.type||'image/png'});
@@ -802,13 +916,51 @@ const HAIR_STYLES=['Court','Bouclé','Chignon','Casquette','Long'];
 
 let avatar=loadAvatar();
 function loadAvatar(){ try{return Object.assign(defAvatar(),JSON.parse(localStorage.getItem('snkr_avatar'))||{});}catch(e){return defAvatar();} }
-function defAvatar(){ return {skin:1,hair:0,top:0,bot:0,bg:0,style:0,pairId:null}; }
+function defAvatar(){ return {skin:1,hair:0,top:0,bot:0,bg:0,style:0,pairId:null,outfit:null,glasses:false}; }
+
+/* ── Limited-edition outfits (shop) ── */
+const OUTFITS=[
+  {id:'neon',    name:'Veste Néon Bloom', tag:'ÉDITION 1/100', emoji:'🌸', price:'4,99 €',
+   desc:'Dégradé corail → rose fluo + casquette assortie.',
+   aiPrompt:'une veste bomber streetwear dégradé corail vers rose fluo, style hype'},
+  {id:'glacier', name:'Doudoune Glacier',  tag:'ÉDITION 2/100', emoji:'🧊', price:'7,99 €',
+   desc:'Doudoune matelassée bleu givré + bonnet.',
+   aiPrompt:'une doudoune matelassée bleu glacier brillante avec bonnet, style hiver premium'},
+  {id:'retro',   name:'Maillot Rétro OG',  tag:'ÉDITION 3/100', emoji:'🏀', price:'5,99 €',
+   desc:'Maillot rayé vintage + casquette rétro.',
+   aiPrompt:'un maillot de basket vintage rayé rouge, crème et vert sapin, style rétro 90s'}
+];
+function outfitParts(id){
+  if(id==='neon') return {
+    defs:'<linearGradient id="ogN" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF6B4A"/><stop offset="1" stop-color="#E85D9A"/></linearGradient>',
+    torso:'url(#ogN)', sleeve:'url(#ogN)',
+    head:'<path d="M84 66 Q84 40 120 40 Q156 40 156 66 Q120 55 84 66Z" fill="#E85D9A"/><path d="M150 65 Q178 61 184 72 Q152 75 150 66Z" fill="#FF6B4A"/><circle cx="120" cy="41" r="4.5" fill="#FF6B4A"/>'
+  };
+  if(id==='glacier') return {
+    defs:'<linearGradient id="ogG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFE3F5"/><stop offset="1" stop-color="#7FB6DA"/></linearGradient>',
+    torso:'url(#ogG)', sleeve:'url(#ogG)',
+    head:'<path d="M82 64 Q82 36 120 36 Q158 36 158 64 Q120 53 82 64Z" fill="#2E4A6B"/><rect x="82" y="58" width="76" height="11" rx="5" fill="#8FB8DA"/><circle cx="120" cy="34" r="6" fill="#8FB8DA"/>'
+  };
+  if(id==='retro') return {
+    defs:'<pattern id="ogR" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="#F2E4C6"/><rect y="0" width="24" height="8" fill="#C8442A"/><rect y="16" width="24" height="8" fill="#2F7A55"/></pattern>',
+    torso:'url(#ogR)', sleeve:'#F2E4C6',
+    head:'<path d="M84 66 Q84 40 120 40 Q156 40 156 66 Q120 55 84 66Z" fill="#C8442A"/><path d="M150 65 Q178 61 184 72 Q152 75 150 66Z" fill="#F2E4C6"/><circle cx="120" cy="41" r="4.5" fill="#fff"/>'
+  };
+  return null;
+}
 function saveAvatar(){ try{localStorage.setItem('snkr_avatar',JSON.stringify(avatar));}catch(e){} }
 
 /* Build the big bitmoji-style character SVG */
 function avatarSVG(cfg,pairUrl){
   const skin=AV_SKIN[cfg.skin], hair=AV_HAIR[cfg.hair], top=AV_TOP[cfg.top], bot=AV_BOT[cfg.bot], bg=AV_BG[cfg.bg];
   const dark=shade(skin,-22);
+  const op = cfg.outfit ? outfitParts(cfg.outfit) : null;
+  const torsoFill = op ? op.torso : top;
+  const sleeveFill = op ? op.sleeve : top;
+  const chestFill = op ? 'rgba(0,0,0,.14)' : shade(top,-12);
+  const defsEl = op ? ('<defs>'+op.defs+'</defs>') : '';
+  const headwear = op ? op.head : '';
+  const glassesEl = cfg.glasses ? '<g stroke="#2A211C" stroke-width="3" fill="rgba(255,255,255,.16)"><rect x="94" y="74" width="21" height="16" rx="6"/><rect x="125" y="74" width="21" height="16" rx="6"/><path d="M115 82 h10" fill="none"/></g>' : '';
   let hairEl='';
   const style=HAIR_STYLES[cfg.style]||'Court';
   if(style==='Court') hairEl=`<path d="M78 78 Q78 40 120 40 Q162 40 162 78 Q150 60 120 60 Q90 60 78 78 Z" fill="${hair}"/>`;
@@ -830,6 +982,7 @@ function avatarSVG(cfg,pairUrl){
   }
 
   return `<svg viewBox="0 0 240 300" xmlns="http://www.w3.org/2000/svg" style="background:${bg}">
+    ${defsEl}
     <ellipse cx="120" cy="288" rx="70" ry="10" fill="rgba(0,0,0,.10)"/>
     ${feet}
     <!-- legs -->
@@ -838,13 +991,13 @@ function avatarSVG(cfg,pairUrl){
     <!-- shorts/hips -->
     <path d="M96 196 h48 v18 q0 8-8 8 h-8 v-14 h-8 v14 h-8 q-8 0-8-8Z" fill="${shade(bot,10)}"/>
     <!-- arms -->
-    <rect x="70" y="126" width="17" height="66" rx="9" fill="${top}"/>
-    <rect x="153" y="126" width="17" height="66" rx="9" fill="${top}"/>
+    <rect x="70" y="126" width="17" height="66" rx="9" fill="${sleeveFill}"/>
+    <rect x="153" y="126" width="17" height="66" rx="9" fill="${sleeveFill}"/>
     <circle cx="78" cy="196" r="10" fill="${skin}"/>
     <circle cx="162" cy="196" r="10" fill="${skin}"/>
     <!-- torso -->
-    <path d="M84 128 q0-24 36-24 q36 0 36 24 v58 q0 12-12 12 H96 q-12 0-12-12Z" fill="${top}"/>
-    <path d="M104 108 q16 12 32 0 l-4 16 q-12 8-24 0Z" fill="${shade(top,-12)}"/>
+    <path d="M84 128 q0-24 36-24 q36 0 36 24 v58 q0 12-12 12 H96 q-12 0-12-12Z" fill="${torsoFill}"/>
+    <path d="M104 108 q16 12 32 0 l-4 16 q-12 8-24 0Z" fill="${chestFill}"/>
     <!-- neck -->
     <rect x="112" y="98" width="16" height="18" rx="6" fill="${dark}"/>
     <!-- head -->
@@ -857,7 +1010,9 @@ function avatarSVG(cfg,pairUrl){
     <path d="M126 72 q7-5 14 0" stroke="${shade(hair,-10)}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
     <ellipse cx="98" cy="94" rx="6" ry="4" fill="#EA9A8C" opacity=".5"/><ellipse cx="142" cy="94" rx="6" ry="4" fill="#EA9A8C" opacity=".5"/>
     <path d="M108 96 q12 12 24 0" stroke="#B4553F" stroke-width="3" fill="none" stroke-linecap="round"/>
+    ${glassesEl}
     ${hairEl}
+    ${headwear}
   </svg>`;
 }
 function shade(hex,pct){
@@ -893,12 +1048,14 @@ function renderPerso(){
   $('#xpTxt').textContent=info.cur+' / '+info.need;
   setTimeout(()=>{ $('#xpFill').style.width=(info.cur/info.need*100)+'%'; },50);
 
-  // validate worn pair still exists
+  // validate worn pair + owned outfit still exist
   if(avatar.pairId && !pairs.find(p=>p.id===avatar.pairId)){ avatar.pairId=null; saveAvatar(); }
+  if(avatar.outfit && !getOwned().includes(avatar.outfit)){ avatar.outfit=null; saveAvatar(); }
   const worn=avatar.pairId?pairs.find(p=>p.id===avatar.pairId):null;
   $('#avatarStage').innerHTML=avatarSVG(avatar, worn?worn.dataUrl:null);
   $('#wornLine').innerHTML= worn ? ('👟 Aux pieds : <b>'+escapeHtml(worn.name)+'</b>') : 'Aucune paire aux pieds — choisis-en une 👇';
 
+  buildOutfitRow();
   buildSwatches('#swSkin',AV_SKIN,'skin');
   buildSwatches('#swHair',AV_HAIR,'hair');
   buildSwatches('#swTop',AV_TOP,'top');
@@ -907,6 +1064,113 @@ function renderPerso(){
   buildHairStyles();
   buildPairPicker();
 }
+function buildOutfitRow(){
+  const owned=getOwned(); const el=$('#outfitRow'); el.innerHTML='';
+  const def=document.createElement('button');
+  def.className='style-btn'+(avatar.outfit?'':' on'); def.textContent='Défaut';
+  def.onclick=()=>{ avatar.outfit=null; saveAvatar(); renderPerso(); };
+  el.appendChild(def);
+  OUTFITS.filter(o=>owned.includes(o.id)).forEach(o=>{
+    const b=document.createElement('button');
+    b.className='style-btn'+(avatar.outfit===o.id?' on':'');
+    b.textContent=o.emoji+' '+o.name.split(' ').slice(1).join(' ');
+    b.onclick=()=>{ avatar.outfit=o.id; saveAvatar(); renderPerso(); };
+    el.appendChild(b);
+  });
+  const shopBtn=document.createElement('button');
+  shopBtn.className='style-btn'; shopBtn.textContent=owned.length?'🛍️ Boutique':'🔒 Débloquer en boutique';
+  shopBtn.onclick=openShop; el.appendChild(shopBtn);
+}
+
+/* ── SHOP (éditions limitées, paiement simulé) ── */
+function getOwned(){ try{return JSON.parse(localStorage.getItem('snkr_owned'))||[];}catch(e){return[];} }
+function setOwned(a){ try{localStorage.setItem('snkr_owned',JSON.stringify(a));}catch(e){} }
+function getPreview(id){ return localStorage.getItem('snkr_prev_'+id)||''; }
+function setPreview(id,url){ try{localStorage.setItem('snkr_prev_'+id,url);}catch(e){} }
+function openShop(){ renderShop(); $('#shopModal').classList.add('on'); }
+function renderShop(){
+  const owned=getOwned(), list=$('#shopList'); list.innerHTML='';
+  OUTFITS.forEach(o=>{
+    const has=owned.includes(o.id), prev=getPreview(o.id);
+    const it=document.createElement('div'); it.className='shop-item';
+    it.innerHTML=`
+      <div class="shop-thumb">${prev?`<img src="${prev}" alt="">`:o.emoji}</div>
+      <div class="shop-info">
+        <div class="shop-name">${o.name}</div>
+        <span class="shop-tag">${o.tag}</span>
+        <div class="shop-desc">${o.desc}</div>
+        <div class="shop-buy">
+          <span class="shop-price">${o.price}</span>
+          <button class="buy-btn ${has?'owned':''}" data-buy="${o.id}">${has?'✓ Possédé · équiper':'Acheter'}</button>
+          ${prev?'':`<button class="gen-one" data-gen="${o.id}">✨ Aperçu</button>`}
+        </div>
+      </div>`;
+    list.appendChild(it);
+  });
+  list.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buyOutfit(b.dataset.buy));
+  list.querySelectorAll('[data-gen]').forEach(b=>b.onclick=()=>genPreview(b.dataset.gen,b));
+}
+function buyOutfit(id){
+  const owned=getOwned();
+  if(owned.includes(id)){ avatar.outfit=id; saveAvatar(); toast('👕 Tenue équipée !'); $('#shopModal').classList.remove('on'); switchTab('perso'); return; }
+  const o=OUTFITS.find(x=>x.id===id);
+  if(!confirm(`Acheter « ${o.name} » pour ${o.price} ?\n\n💳 Paiement SIMULÉ — aucun vrai débit.`)) return;
+  owned.push(id); setOwned(owned);
+  avatar.outfit=id; saveAvatar();
+  toast('🎉 « '+o.name+' » débloquée & équipée !');
+  renderShop();
+}
+async function geminiOutfitImage(o){
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${encodeURIComponent(getKey())}`;
+  const prompt=`Sticker autocollant die-cut de mode représentant ${o.aiPrompt}. Illustration vectorielle plate, contours nets, contour blanc épais de sticker, douce ombre portée, fond entièrement blanc, objet centré, sans aucun texte.`;
+  const payload=(mods)=>({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:mods?{responseModalities:mods}:undefined});
+  let json=await postJson(url,payload(['IMAGE']));
+  if(json.error) json=await postJson(url,payload(['TEXT','IMAGE']));
+  if(json.error) throw new Error(json.error.message||'gen error');
+  const parts=(((json.candidates||[])[0]||{}).content||{}).parts||[];
+  const img=parts.find(p=>p.inlineData||p.inline_data);
+  if(!img) throw new Error('pas d\'image');
+  const inl=img.inlineData||img.inline_data;
+  return `data:${inl.mimeType||inl.mime_type||'image/png'};base64,${inl.data}`;
+}
+async function genPreview(id,btn){
+  if(!getKey()){ toast('Ajoute ta clé Gemini pour générer un aperçu'); return; }
+  const o=OUTFITS.find(x=>x.id===id);
+  btn.textContent='…'; btn.disabled=true;
+  try{ setPreview(id, await geminiOutfitImage(o)); renderShop(); toast('✨ Aperçu généré'); }
+  catch(e){ toast('Génération : '+shortErr(e)); btn.textContent='✨ Aperçu'; btn.disabled=false; }
+}
+$('#genAll').onclick=async()=>{
+  if(!getKey()){ toast('Ajoute ta clé Gemini'); return; }
+  const todo=OUTFITS.filter(o=>!getPreview(o.id));
+  if(!todo.length){ toast('Aperçus déjà générés ✅'); return; }
+  if(!confirm(`Générer ${todo.length} aperçu(s) avec l'IA ?\n≈ ${(todo.length*0.04).toFixed(2)} € (~0,04 € chacun)`)) return;
+  for(const o of todo){ try{ setPreview(o.id, await geminiOutfitImage(o)); renderShop(); }catch(e){} }
+  toast('✨ Aperçus générés');
+};
+$('#openShop').onclick=openShop;
+$('#shopX').onclick=()=>$('#shopModal').classList.remove('on');
+$('#shopModal').onclick=e=>{ if(e.target.id==='shopModal')$('#shopModal').classList.remove('on'); };
+
+/* ── SELFIE → perso (analyse cheap flash-lite) ── */
+$('#persoFromPhoto').onclick=()=>{
+  if(!getKey()){ toast('Ajoute ta clé Gemini pour analyser une photo 📸'); return; }
+  $('#selfieInput').click();
+};
+$('#selfieInput').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=async()=>{
+    toast('🔎 Analyse de ton visage…');
+    try{
+      const a=await geminiSelfieToAvatar(r.result);
+      avatar.skin=a.skin; avatar.hair=a.hair; avatar.style=a.style; avatar.glasses=a.glasses;
+      saveAvatar(); renderPerso();
+      toast('✨ Ton perso a pris tes traits !');
+    }catch(err){ toast('Analyse : '+shortErr(err)); }
+  };
+  r.readAsDataURL(f); e.target.value='';
+};
 function buildSwatches(sel,arr,part){
   const el=$(sel); el.innerHTML='';
   arr.forEach((c,i)=>{
@@ -945,7 +1209,7 @@ function buildPairPicker(){
 $('#shareAvatar').onclick=shareAvatar;
 async function shareAvatar(){
   const info=levelInfo(pairs.length);
-  const msg=`Mon perso Sneakerie — niveau ${info.lvl} « ${info.title} » avec ${pairs.length} paire(s) 👟✨`;
+  const msg=`Mon perso SNEAKIII — niveau ${info.lvl} « ${info.title} » avec ${pairs.length} paire(s) 👟✨`;
   // rasterise the avatar SVG to PNG for sharing
   try{
     const svg=$('#avatarStage').querySelector('svg').outerHTML;
