@@ -2,7 +2,7 @@ name: Deploy Sneakerie to Pages
 
 on:
   push:
-    branches: [claude/shoe-closet-app-4xsgtc]
+    branches: [main, claude/shoe-closet-app-4xsgtc]
   workflow_dispatch:
 
 permissions:
