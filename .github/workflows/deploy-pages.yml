@@ -29,10 +29,10 @@ jobs:
         with:
           enablement: true
 
-      - name: Upload the app (armoire/ only)
+      - name: Upload the whole site (OPEP root + /armoire/ app)
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./armoire
+          path: .
 
       - name: Deploy to GitHub Pages
         id: deployment
