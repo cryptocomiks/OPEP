@@ -70,3 +70,38 @@ export async function setEquipped(id) {
   } catch (e) {}
   return id;
 }
+
+// ---------- characters ----------
+const OWNED_CH = 'uno_chars_v1';
+const EQ_CH = 'uno_char_v1';
+const FREE_CHARS = ['kid', 'girl', 'cap'];
+
+export async function getOwnedChars() {
+  try {
+    const v = await AsyncStorage.getItem(OWNED_CH);
+    const arr = v ? JSON.parse(v) : [];
+    for (const f of FREE_CHARS) if (!arr.includes(f)) arr.push(f);
+    return arr;
+  } catch (e) {
+    return [...FREE_CHARS];
+  }
+}
+export async function addOwnedChar(id) {
+  const owned = await getOwnedChars();
+  if (!owned.includes(id)) {
+    owned.push(id);
+    try { await AsyncStorage.setItem(OWNED_CH, JSON.stringify(owned)); } catch (e) {}
+  }
+  return owned;
+}
+export async function getEquippedChar() {
+  try {
+    return (await AsyncStorage.getItem(EQ_CH)) || 'kid';
+  } catch (e) {
+    return 'kid';
+  }
+}
+export async function setEquippedChar(id) {
+  try { await AsyncStorage.setItem(EQ_CH, id); } catch (e) {}
+  return id;
+}

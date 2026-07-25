@@ -37,6 +37,13 @@ Puis :
   (sauvegardé sur l'appareil), compteur animé sur l'écran de victoire.
 - **Boutons Quitter** partout (avec confirmation).
 
+## 🕹️ Extras & jeu secret
+
+- **Carte mystère** : pendant une partie, une carte ❓ dorée apparaît au hasard — le 1er à la toucher gagne +500$ (ou en perd un peu, c'est risqué).
+- **Sprites de personnage** : chaque joueur a un avatar qui le symbolise (visible en partie et au salon). **Boîte Personnage** dans la boutique pour en débloquer d'autres.
+- **Chat vocal simultané** : tout le monde peut parler en même temps (les notes se superposent à la lecture). Maintien du 🎤.
+- **🥚 Easter egg** : tape **3 fois** sur la carte de la défausse (ou sur le logo UNO) pour ouvrir le **jeu secret** — un mini-RPG de capture de monstres dans la ville de **Lavenvyl** : balade-toi, affronte des créatures dans les hautes herbes, capture-les, complète ton **Pokédex**, et achète Balls/Potions **avec ton cash UNO**. Musique chiptune incluse 🎵.
+
 ## 🔊 Son, voix & rang
 
 - **Design sonore** : effets pour chaque carte/action (pose, pioche, +2/+4, bouclier, échange, vol, victoire) + son « à toi ». Bouton 🔊/🔇 sur l'accueil.

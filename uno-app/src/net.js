@@ -69,15 +69,16 @@ function topics(code) {
     join: `${base}/join`,
     chat: `${base}/chat`,
     voice: `${base}/voice`,
+    mystery: `${base}/mystery`,
   };
 }
 
 // A thin pub/sub client. The game orchestration lives in App.js.
 export class GameClient {
-  constructor(code, { onLobby, onState, onAction, onJoin, onStatus, onChat, onVoice } = {}) {
+  constructor(code, { onLobby, onState, onAction, onJoin, onStatus, onChat, onVoice, onMystery } = {}) {
     this.code = code;
     this.t = topics(code);
-    this.cb = { onLobby, onState, onAction, onJoin, onStatus, onChat, onVoice };
+    this.cb = { onLobby, onState, onAction, onJoin, onStatus, onChat, onVoice, onMystery };
     this.client = null;
     this.connected = false;
   }
@@ -117,6 +118,7 @@ export class GameClient {
       else if (topic === this.t.join) this.cb.onJoin && this.cb.onJoin(data);
       else if (topic === this.t.chat) this.cb.onChat && this.cb.onChat(data);
       else if (topic === this.t.voice) this.cb.onVoice && this.cb.onVoice(data);
+      else if (topic === this.t.mystery) this.cb.onMystery && this.cb.onMystery(data);
     });
 
     return client;
@@ -136,18 +138,23 @@ export class GameClient {
     this.sub(this.t.action);
     this.sub(this.t.chat);
     this.sub(this.t.voice);
+    this.sub(this.t.mystery);
   }
   subscribeAsGuest() {
     this.sub(this.t.lobby);
     this.sub(this.t.state);
     this.sub(this.t.chat);
     this.sub(this.t.voice);
+    this.sub(this.t.mystery);
   }
   sendChat(msg) {
     this.pub(this.t.chat, msg, false);
   }
   sendVoice(msg) {
     this.pub(this.t.voice, msg, false);
+  }
+  sendMystery(msg) {
+    this.pub(this.t.mystery, msg, false);
   }
   publishLobby(lobby) {
     this.pub(this.t.lobby, lobby, true); // retained so late joiners sync

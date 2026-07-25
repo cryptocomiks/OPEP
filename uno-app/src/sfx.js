@@ -13,6 +13,7 @@ const FILES = {
   turn: require('../assets/sounds/turn.wav'),
   win: require('../assets/sounds/win.wav'),
   explode: require('../assets/sounds/explode.wav'),
+  catch: require('../assets/sounds/catch.wav'),
 };
 
 let sounds = {};
@@ -59,4 +60,23 @@ export function play(name) {
   const s = sounds[name];
   if (!s) return;
   s.replayAsync().catch(() => {});
+}
+
+// ---- background music (mini-game) ----
+let music = null;
+export async function playMusic() {
+  if (muted) return;
+  try {
+    if (!music) {
+      const { sound } = await Audio.Sound.createAsync(require('../assets/sounds/mon_theme.wav'), { isLooping: true, volume: 0.45 });
+      music = sound;
+    }
+    await music.setPositionAsync(0);
+    await music.playAsync();
+  } catch (e) {}
+}
+export async function stopMusic() {
+  try {
+    if (music) await music.stopAsync();
+  } catch (e) {}
 }

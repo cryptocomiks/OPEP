@@ -18,6 +18,8 @@ import ClanScreen from './src/components/ClanScreen';
 import ChatPanel from './src/components/ChatPanel';
 import BoxOpen from './src/components/BoxOpen';
 import ChatBubbles from './src/components/ChatBubbles';
+import MiniGame from './src/components/MiniGame';
+import MysteryCard from './src/components/MysteryCard';
 import { initSfx, play as playSfx, isMuted, setMuted } from './src/sfx';
 import { startRecording, stopRecording, playBase64 } from './src/voice';
 import { rankFromRating, ratingDelta } from './src/ranking';
@@ -25,7 +27,8 @@ import { CARD_COLORS, theme, GRAD } from './src/theme';
 import { createGame, applyAction, publicView, canPlay, COLORS, isWildType, TARGETED } from './src/engine';
 import { botAction } from './src/bots';
 import { GameClient, makeCode, makeId } from './src/net';
-import { getBalance, setBalance as persistBalance, addBalance, getOwned, addOwned, getEquipped, setEquipped } from './src/wallet';
+import { getBalance, setBalance as persistBalance, addBalance, getOwned, addOwned, getEquipped, setEquipped, getOwnedChars, addOwnedChar, getEquippedChar, setEquippedChar } from './src/wallet';
+import { CHARACTERS, getCharacter, charFromId, rollCharacter, CHAR_BOX_PRICE } from './src/characters';
 import { loadProg, saveProg, recordEvent, levelInfo, PASS, PREMIUM_PRICE } from './src/progression';
 import { openBox, BOX_PRICE, craftCost } from './src/gacha';
 import { SKINS, getSkin } from './src/skins';
@@ -75,6 +78,10 @@ export default function App() {
   const [muted, setMutedState] = useState(false);
   const [recording, setRecording] = useState(false);
   const [voiceTalker, setVoiceTalker] = useState(null);
+  const [ownedChars, setOwnedChars] = useState(['kid']);
+  const [equippedChar, setEquipChar] = useState('kid');
+  const [prevScreen, setPrevScreen] = useState('home');
+  const [mystery, setMystery] = useState(null); // {id} active card
 
   const meRef = useRef({ id: makeId(), name });
   const clientRef = useRef(null);
@@ -91,18 +98,42 @@ export default function App() {
   const progRef = useRef(null);
   const recordingRef = useRef(false);
   const recTimerRef = useRef(null);
+  const equippedCharRef = useRef('kid');
+  const screenRef = useRef('home');
+  const tapRef = useRef({ id: null, count: 0, t: 0 });
+  const mysteryRef = useRef(null); // {id, claims:[], resolved} host-side
+  const mysterySpawnRef = useRef(0);
 
   useEffect(() => { meRef.current.name = name; }, [name]);
   useEffect(() => { equippedRef.current = equipped; }, [equipped]);
   useEffect(() => { ownedRef.current = owned; }, [owned]);
+  useEffect(() => { equippedCharRef.current = equippedChar; }, [equippedChar]);
+  useEffect(() => { screenRef.current = screen; }, [screen]);
 
   useEffect(() => {
     getBalance().then(setBalance);
     getOwned().then(setOwned);
     getEquipped().then(setEquip);
+    getOwnedChars().then(setOwnedChars);
+    getEquippedChar().then(setEquipChar);
     loadProg().then((p) => { setProg(p); progRef.current = p; });
     initSfx().then(() => setMutedState(isMuted()));
   }, []);
+
+  const openMini = useCallback(() => {
+    if (screenRef.current !== 'mini') setPrevScreen(screenRef.current);
+    setScreen('mini');
+    haptic('success');
+  }, []);
+
+  // triple-tap easter egg detector
+  const tripleTap = useCallback((id) => {
+    const now = Date.now();
+    const r = tapRef.current;
+    if (r.id === id && now - r.t < 800) r.count += 1; else { r.id = id; r.count = 1; }
+    r.t = now;
+    if (r.count >= 3) { r.count = 0; openMini(); }
+  }, [openMini]);
 
   const toggleMute = useCallback(() => {
     const nv = !muted;
@@ -138,7 +169,20 @@ export default function App() {
   }, []);
   useEffect(() => () => cleanup(), [cleanup]);
 
-  const myEntry = () => ({ id: meRef.current.id, name: meRef.current.name, skin: equippedRef.current, clan: progRef.current ? progRef.current.clan : null, rating: progRef.current ? progRef.current.rating : 1000 });
+  const myEntry = () => ({ id: meRef.current.id, name: meRef.current.name, skin: equippedRef.current, clan: progRef.current ? progRef.current.clan : null, rating: progRef.current ? progRef.current.rating : 1000, char: equippedCharRef.current });
+
+  // ---------- characters ----------
+  const buyCharBox = useCallback(() => {
+    if (balance < CHAR_BOX_PRICE) { flash('Pas assez de cash.'); return; }
+    const nb = balance - CHAR_BOX_PRICE; setBalance(nb); persistBalance(nb);
+    const ch = rollCharacter(Math.random);
+    const dup = ownedChars.includes(ch.id);
+    if (!dup) addOwnedChar(ch.id).then(setOwnedChars);
+    setEquipChar(ch.id); setEquippedChar(ch.id);
+    haptic('success'); flash(`${ch.emoji} ${ch.name}${dup ? ' (doublon)' : ' débloqué'} !`);
+  }, [balance, ownedChars, flash]);
+
+  const equipChar = useCallback((id) => { setEquipChar(id); setEquippedChar(id); haptic('light'); }, []);
 
   // ---------- skins / market ----------
   const buySkin = useCallback((skin) => {
@@ -283,6 +327,34 @@ export default function App() {
     playBase64(data.b64);
     setTimeout(() => setVoiceTalker((t) => (t === data.name ? null : t)), 3500);
   };
+  const mysteryAmount = () => (Math.random() < 0.65 ? 500 : -(150 + Math.floor(Math.random() * 151)));
+  const applyMysteryResult = (amount) => {
+    addBalance(amount).then(setBalance);
+    flash(amount >= 0 ? `🎁 Carte mystère : +${amount}$ !` : `💥 Carte mystère : ${amount}$ …`);
+    haptic(amount >= 0 ? 'success' : 'heavy');
+    playSfx(amount >= 0 ? 'win' : 'explode');
+  };
+  const handleMystery = (data) => {
+    if (!data) return;
+    if (data.type === 'spawn') { setMystery({ id: data.id }); playSfx('turn'); }
+    else if (data.type === 'result') {
+      if (data.winner === meRef.current.id) applyMysteryResult(data.amount);
+      else flash(`Carte mystère prise par ${data.name || 'un joueur'} !`);
+      setMystery(null);
+    } else if (data.type === 'claim' && roleRef.current === 'host') {
+      const m = mysteryRef.current;
+      if (!m || m.id !== data.id || m.resolved) return;
+      m.resolved = true;
+      clientRef.current && clientRef.current.sendMystery({ type: 'result', id: data.id, winner: data.pid, name: data.name, amount: mysteryAmount() });
+    }
+  };
+  const claimMystery = useCallback(() => {
+    const m = mystery;
+    if (!m) return;
+    setMystery(null);
+    if (modeRef.current === 'solo') { applyMysteryResult(mysteryAmount()); }
+    else if (clientRef.current) { clientRef.current.sendMystery({ type: 'claim', id: m.id, pid: meRef.current.id, name: meRef.current.name, ts: Date.now() }); }
+  }, [mystery]);
 
   // ---------- HOST ----------
   const hostGame = useCallback(() => {
@@ -296,6 +368,7 @@ export default function App() {
       onStatus: (s) => setStatus(s),
       onChat: attachChat,
       onVoice: handleVoice,
+      onMystery: handleMystery,
       onJoin: (player) => {
         const lob = lobbyRef.current;
         if (lob.started || !player || !player.id) return;
@@ -353,6 +426,7 @@ export default function App() {
       onStatus: (s) => setStatus(s),
       onChat: attachChat,
       onVoice: handleVoice,
+      onMystery: handleMystery,
       onLobby: (lob) => {
         lobbyRef.current = lob; setLobby(lob);
         if (!lob.players.find((p) => p.id === me.id) && !lob.started) client.sendJoin(me);
@@ -486,6 +560,26 @@ export default function App() {
     prevTurnRef.current = myTurn;
   }, [myTurn]);
 
+  // random mystery-card spawner (solo locally, host in multiplayer)
+  useEffect(() => {
+    if (screen !== 'game') return;
+    const isSpawner = modeRef.current === 'solo' || roleRef.current === 'host';
+    if (!isSpawner) return;
+    const iv = setInterval(() => {
+      const st = stateRef.current;
+      if (!st || st.status !== 'playing') return;
+      if (mysteryRef.current && !mysteryRef.current.resolved) return;
+      if (Math.random() < 0.4) {
+        const id = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        mysteryRef.current = { id, resolved: false };
+        if (modeRef.current === 'solo') { setMystery({ id }); playSfx('turn'); }
+        else if (clientRef.current) clientRef.current.sendMystery({ type: 'spawn', id });
+        setTimeout(() => setMystery((cur) => (cur && cur.id === id ? null : cur)), 6000);
+      }
+    }, 9000);
+    return () => clearInterval(iv);
+  }, [screen]);
+
   const confirmLeave = useCallback(() => {
     Alert.alert('Quitter la partie ?', 'Tu vas revenir au menu principal.', [
       { text: 'Annuler', style: 'cancel' },
@@ -497,6 +591,7 @@ export default function App() {
     cleanup();
     setGameState(null); setRole(null); roleRef.current = null; modeRef.current = null;
     setMode(null); setFx(null); setBet(null); setChatOpen(false); setChatMessages([]);
+    setMystery(null); mysteryRef.current = null;
     setLobby({ players: [], hostId: null, started: false }); setScreen('home');
   }, [cleanup]);
 
@@ -534,7 +629,7 @@ export default function App() {
               onHost={hostGame} onJoin={joinGame} onSolo={startSolo}
               onMarket={() => setScreen('market')} onPass={() => setScreen('progress')} onClan={() => setScreen('clan')}
               bots={bots} setBots={setBots} balance={balance} clanId={clanId} prog={prog}
-              muted={muted} onMute={toggleMute}
+              muted={muted} onMute={toggleMute} character={getCharacter(equippedChar)} onSecretTap={() => tripleTap('logo')}
             />
           )}
 
@@ -543,7 +638,22 @@ export default function App() {
               balance={balance} shards={prog ? prog.shards : 0} boxes={prog ? prog.boxes : 0}
               owned={owned} equipped={equipped}
               onBuy={buySkin} onEquip={equipSkin} onOpenBox={openMysteryBox} onCraft={craftSkin}
+              ownedChars={ownedChars} equippedChar={equippedChar} charBoxPrice={CHAR_BOX_PRICE}
+              onCharBox={buyCharBox} onEquipChar={equipChar}
               onBack={() => setScreen('home')}
+            />
+          )}
+
+          {screen === 'mini' && (
+            <MiniGame
+              character={getCharacter(equippedChar)}
+              balance={balance}
+              muted={muted}
+              onSpend={(amount) => {
+                if (balance < amount) return false;
+                const nb = balance - amount; setBalance(nb); persistBalance(nb); return true;
+              }}
+              onClose={() => setScreen(prevScreen || 'home')}
             />
           )}
 
@@ -569,6 +679,7 @@ export default function App() {
               onPlay={onPlayCard} onDraw={() => send({ type: 'draw', playerId: meRef.current.id })}
               onPass={() => send({ type: 'pass', playerId: meRef.current.id })}
               onLeave={confirmLeave} onChat={() => setChatOpen(true)}
+              onSecretTap={() => tripleTap('discard')}
             />
           )}
 
@@ -593,6 +704,8 @@ export default function App() {
               </Pressable>
             </>
           )}
+
+          {screen === 'game' && mystery && <MysteryCard onClaim={claimMystery} />}
 
           {fx && <FxLayer key={fxKey} fx={fx} onDone={() => setFx(null)} />}
           {pendingCard && <ColorPicker onPick={chooseColor} onCancel={() => setPendingCard(null)} />}
@@ -619,7 +732,7 @@ export default function App() {
 }
 
 // ---------------- Home ----------------
-function HomeScreen({ name, setName, codeInput, setCodeInput, onHost, onJoin, onSolo, onMarket, onPass, onClan, bots, setBots, balance, clanId, prog, muted, onMute }) {
+function HomeScreen({ name, setName, codeInput, setCodeInput, onHost, onJoin, onSolo, onMarket, onPass, onClan, bots, setBots, balance, clanId, prog, muted, onMute, character, onSecretTap }) {
   const clan = getClan(clanId);
   const li = prog ? levelInfo(prog.xp) : { tier: 0 };
   const rank = rankFromRating(prog ? prog.rating : 1000);
@@ -627,28 +740,26 @@ function HomeScreen({ name, setName, codeInput, setCodeInput, onHost, onJoin, on
     <LinearGradient colors={GRAD.home} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.home}>
         <View style={styles.topRow}>
-          <TouchableOpacity style={styles.walletChip} onPress={onMute}><Text style={styles.walletText}>{muted ? '🔇' : '🔊'}</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.iconChip} onPress={onMute}><Text style={styles.walletText}>{muted ? '🔇' : '🔊'}</Text></TouchableOpacity>
           <View style={styles.walletChip}><Text style={styles.walletText}>💰 {balance}$</Text></View>
           <View style={styles.walletChip}><Text style={styles.walletText}>💎 {prog ? prog.shards : 0}</Text></View>
         </View>
 
         <View style={[styles.rankBanner, { borderColor: rank.color }]}>
-          <Text style={styles.rankIcon}>{rank.icon}</Text>
-          <View>
-            <Text style={[styles.rankName, { color: rank.color }]}>{rank.name}</Text>
+          <View style={[styles.charBubble, { backgroundColor: character.color }]}><Text style={styles.charEmoji}>{character.emoji}</Text></View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.rankName, { color: rank.color }]}>{rank.icon} {rank.name}</Text>
             <Text style={styles.rankPts}>{prog ? prog.rating : 1000} pts · {prog ? prog.wins || 0 : 0}V / {prog ? prog.losses || 0 : 0}D</Text>
           </View>
         </View>
 
         <View style={styles.navRow}>
-          <TouchableOpacity style={styles.navBtn} onPress={onMarket}><Text style={styles.navText}>🛍️ Boutique</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={onPass}><Text style={styles.navText}>🏆 Passe {li.tier > 0 ? `(P${li.tier})` : ''}</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={onClan}>
-            <Text style={styles.navText}>{clan ? `${clan.icon} ${clan.name}` : '⚔️ Clan'}</Text>
-          </TouchableOpacity>
+          <NavCard icon="🛍️" label="Boutique" onPress={onMarket} />
+          <NavCard icon="🏆" label={li.tier > 0 ? `Passe ${li.tier}` : 'Passe'} onPress={onPass} />
+          <NavCard icon={clan ? clan.icon : '⚔️'} label={clan ? clan.name : 'Clan'} onPress={onClan} color={clan ? clan.color : undefined} />
         </View>
 
-        <View style={styles.logoWrap}><UnoLogo size={68} /></View>
+        <TouchableOpacity activeOpacity={0.9} onPress={onSecretTap} style={styles.logoWrap}><UnoLogo size={68} /></TouchableOpacity>
         <Text style={styles.tagline}>Joue avec tes amis · rejoins avec un code</Text>
 
         <Text style={styles.label}>Ton pseudo</Text>
@@ -697,9 +808,10 @@ function LobbyScreen({ code, role, status, lobby, meId, bet, onStart, onLeave, o
         <ScrollView style={{ flex: 1 }}>
           {lobby.players.map((p) => {
             const clan = getClan(p.clan);
+            const ch = p.char ? getCharacter(p.char) : charFromId(p.id);
             return (
               <View key={p.id} style={styles.playerRow}>
-                <View style={styles.avatar}><Text style={styles.avatarText}>{(p.name || '?').slice(0, 1).toUpperCase()}</Text></View>
+                <View style={[styles.avatar, { backgroundColor: ch.color }]}><Text style={styles.avatarText}>{ch.emoji}</Text></View>
                 <Text style={styles.playerName}>{rankFromRating(p.rating || 1000).icon} {clan ? clan.icon + ' ' : ''}{p.name}</Text>
                 {p.id === lobby.hostId ? <Text style={styles.hostTag}>hôte</Text> : null}
                 {p.id === meId ? <Text style={styles.youTag}>toi</Text> : null}
@@ -718,7 +830,7 @@ function LobbyScreen({ code, role, status, lobby, meId, bet, onStart, onLeave, o
 }
 
 // ---------------- Game ----------------
-function GameScreen({ view, meId, myTurn, mode, status, bet, onPlay, onDraw, onPass, onLeave, onChat }) {
+function GameScreen({ view, meId, myTurn, mode, status, bet, onPlay, onDraw, onPass, onLeave, onChat, onSecretTap }) {
   const finished = view.status === 'finished';
   const dirArrow = view.direction === 1 ? '↻' : '↺';
   const me = view.players.find((p) => p.id === meId) || {};
@@ -748,9 +860,13 @@ function GameScreen({ view, meId, myTurn, mode, status, bet, onPlay, onDraw, onP
           {view.players.filter((p) => p.id !== meId).map((p) => {
             const active = p.id === view.currentPlayerId && !finished;
             const clan = getClan(p.clan);
+            const ch = p.char ? getCharacter(p.char) : charFromId(p.id);
             return (
               <View key={p.id} style={[styles.oppChip, active && styles.oppActive]}>
-                <Text style={styles.oppName} numberOfLines={1}>{rankFromRating(p.rating).icon} {clan ? clan.icon + ' ' : ''}{p.name}</Text>
+                <View style={styles.oppHead}>
+                  <View style={[styles.oppSprite, { backgroundColor: ch.color }]}><Text style={styles.oppSpriteText}>{ch.emoji}</Text></View>
+                  <Text style={styles.oppName} numberOfLines={1}>{rankFromRating(p.rating).icon} {clan ? clan.icon + ' ' : ''}{p.name}</Text>
+                </View>
                 <View style={styles.oppCards}>
                   <CardBack small skin={p.skin} />
                   <Text style={styles.oppCount}>×{p.count}</Text>
@@ -776,7 +892,9 @@ function GameScreen({ view, meId, myTurn, mode, status, bet, onPlay, onDraw, onP
               <View style={[styles.colorDot, { backgroundColor: CARD_COLORS[view.currentColor] || '#888' }]} />
               <Text style={styles.dir}>{dirArrow}</Text>
             </View>
-            <Animated.View style={{ transform: [{ scale: discardPop }] }}><Card card={view.top} /></Animated.View>
+            <TouchableOpacity activeOpacity={1} onPress={onSecretTap}>
+              <Animated.View style={{ transform: [{ scale: discardPop }] }}><Card card={view.top} /></Animated.View>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -853,6 +971,15 @@ function TargetPicker({ players, onPick, onCancel }) {
   );
 }
 
+function NavCard({ icon, label, onPress, color }) {
+  return (
+    <TouchableOpacity style={styles.navCard} activeOpacity={0.85} onPress={onPress}>
+      <Text style={styles.navIcon}>{icon}</Text>
+      <Text style={[styles.navLabel, color && { color }]} numberOfLines={1}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
 function TopBar({ title, status, onLeave, logo, onChat }) {
   const dot = status === 'connected' || status === 'solo' ? theme.ok : status === 'offline' || (status && status.startsWith('error')) ? theme.danger : theme.accent;
   return (
@@ -873,14 +1000,17 @@ const styles = StyleSheet.create({
   home: { padding: 20, paddingTop: 20, alignItems: 'stretch' },
   topRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   walletChip: { backgroundColor: 'rgba(245,197,24,0.14)', borderColor: theme.accent, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
+  iconChip: { backgroundColor: theme.panel, borderColor: theme.border, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginRight: 'auto' },
   walletText: { color: theme.accent, fontWeight: '900', fontSize: 14 },
-  rankBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, alignSelf: 'center', marginTop: 12, backgroundColor: theme.panel, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 10, borderWidth: 2 },
-  rankIcon: { fontSize: 30 },
+  rankBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, alignSelf: 'stretch', marginTop: 12, backgroundColor: theme.panel, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 2 },
+  charBubble: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
+  charEmoji: { fontSize: 26 },
   rankName: { fontWeight: '900', fontSize: 18 },
   rankPts: { color: theme.sub, fontSize: 12, marginTop: 1 },
-  navRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  navBtn: { flex: 1, backgroundColor: theme.panel, borderColor: theme.border, borderWidth: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center' },
-  navText: { color: theme.text, fontWeight: '800', fontSize: 12 },
+  navRow: { flexDirection: 'row', gap: 10, marginTop: 14 },
+  navCard: { flex: 1, backgroundColor: theme.panel, borderColor: theme.border, borderWidth: 1, paddingVertical: 14, borderRadius: 16, alignItems: 'center', gap: 4 },
+  navIcon: { fontSize: 24 },
+  navLabel: { color: theme.text, fontWeight: '800', fontSize: 12 },
   logoWrap: { alignItems: 'center', marginTop: 14, marginBottom: 6 },
   tagline: { color: theme.sub, textAlign: 'center', marginBottom: 16 },
   label: { color: theme.text, fontWeight: '700', marginBottom: 8, marginTop: 10 },
@@ -934,7 +1064,10 @@ const styles = StyleSheet.create({
   opponents: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginBottom: 6 },
   oppChip: { backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, alignItems: 'center', borderWidth: 2, borderColor: 'transparent', minWidth: 92 },
   oppActive: { borderColor: theme.accent },
-  oppName: { color: theme.text, fontWeight: '700', maxWidth: 96 },
+  oppHead: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  oppSprite: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#fff' },
+  oppSpriteText: { fontSize: 13 },
+  oppName: { color: theme.text, fontWeight: '700', maxWidth: 80 },
   oppCards: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
   oppCount: { color: '#dfe4ff', fontWeight: '800' },
   oppTags: { flexDirection: 'row', gap: 6, marginTop: 2 },

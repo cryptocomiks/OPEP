@@ -3,11 +3,12 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { LinearGradient } from 'expo-linear-gradient';
 import { CardBack } from './Card';
 import { SKINS, RARITY } from '../skins';
+import { CHARACTERS } from '../characters';
 import { BOX_PRICE, craftCost } from '../gacha';
 import { theme, GRAD } from '../theme';
 
 // Sleeve marketplace: mystery boxes, direct buy, craft from shards, collection.
-export default function MarketScreen({ balance, shards, boxes, owned, equipped, onBuy, onEquip, onOpenBox, onCraft, onBack }) {
+export default function MarketScreen({ balance, shards, boxes, owned, equipped, onBuy, onEquip, onOpenBox, onCraft, ownedChars = [], equippedChar, charBoxPrice = 250, onCharBox, onEquipChar, onBack }) {
   return (
     <LinearGradient colors={GRAD.home} style={{ flex: 1 }}>
       <View style={styles.header}>
@@ -81,6 +82,32 @@ export default function MarketScreen({ balance, shards, boxes, owned, equipped, 
             );
           })}
         </View>
+
+        {/* Characters */}
+        <View style={styles.boxCard}>
+          <Text style={styles.boxEmoji}>🧍</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.boxTitle}>Boîte Personnage</Text>
+            <Text style={styles.boxSub}>Un avatar aléatoire pour te représenter</Text>
+          </View>
+          <TouchableOpacity style={[styles.boxBtn, balance < charBoxPrice && styles.btnDisabled]} disabled={balance < charBoxPrice} onPress={onCharBox}>
+            <Text style={styles.boxBtnText}>Ouvrir {charBoxPrice}$</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.section}>Mes personnages</Text>
+        <View style={styles.grid}>
+          {CHARACTERS.filter((c) => ownedChars.includes(c.id)).map((c) => {
+            const on = equippedChar === c.id;
+            return (
+              <TouchableOpacity key={c.id} style={[styles.charTile, on && styles.tileEquipped]} onPress={() => onEquipChar(c.id)}>
+                <View style={[styles.charAv, { backgroundColor: c.color }]}><Text style={styles.charAvText}>{c.emoji}</Text></View>
+                <Text style={styles.name} numberOfLines={1}>{c.name}</Text>
+                <Text style={[styles.rar, { color: on ? theme.ok : theme.sub }]}>{on ? '✓ Équipé' : 'Équiper'}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </ScrollView>
     </LinearGradient>
   );
@@ -120,4 +147,7 @@ const styles = StyleSheet.create({
   btnCraftText: { color: '#8be9ff', fontWeight: '800', fontSize: 12 },
   btnDisabled: { backgroundColor: theme.panel2, borderColor: theme.border, opacity: 0.6 },
   btnText: { color: '#fff', fontWeight: '800' },
+  charTile: { width: '30%', backgroundColor: theme.panel, borderRadius: 14, padding: 10, alignItems: 'center', borderWidth: 2, borderColor: theme.border },
+  charAv: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
+  charAvText: { fontSize: 26 },
 });

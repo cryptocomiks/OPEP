@@ -108,7 +108,7 @@ export function createGame(players, seed) {
   for (const p of players) shields[p.id] = 0;
 
   return {
-    players: players.map((p) => ({ id: p.id, name: p.name, clan: p.clan || null, skin: p.skin || 'classic', rating: p.rating || 1000 })),
+    players: players.map((p) => ({ id: p.id, name: p.name, clan: p.clan || null, skin: p.skin || 'classic', rating: p.rating || 1000, char: p.char || null })),
     hands,
     drawPile: deck,
     discard,
@@ -449,6 +449,7 @@ export function publicView(state, viewerId) {
       clan: p.clan || null,
       skin: p.skin || 'classic',
       rating: p.rating || 1000,
+      char: p.char || null,
       shield: state.shields ? state.shields[p.id] || 0 : 0,
       count: state.hands[p.id] ? state.hands[p.id].length : 0,
     })),
