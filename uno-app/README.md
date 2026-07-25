@@ -37,6 +37,17 @@ Puis :
   (sauvegardé sur l'appareil), compteur animé sur l'écran de victoire.
 - **Boutons Quitter** partout (avec confirmation).
 
+## 🃏 Cartes spéciales & extras
+
+- **🔄 Échange** : échange toute ta main avec un joueur ciblé.
+- **♻️ Renouveau** : force un joueur à rendre sa main et piocher une main neuve.
+- **🔒 Blocage** : le Skip pose un cadenas animé sur le joueur bloqué.
+- **Badge « TON TOUR »** bien visible + vibration quand ton tour arrive.
+- **Paris** : mise du cash sur un vainqueur avant la partie (cote = nb de joueurs).
+- **Boutique de sleeves** : skins animés (Feu, Éclairs, Holo, Yu-Gi-Oh, Or) à
+  acheter avec ton cash et à équiper — le dos de tes cartes change en jeu.
+- **Table de croupier** : feutrine verte, dos de cartes, effets.
+
 ## 🎮 Comment jouer
 
 1. **Un joueur** crée la partie → il obtient un **code** (ex. `K7P2M`).

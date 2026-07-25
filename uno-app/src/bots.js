@@ -1,7 +1,7 @@
 // Deterministic bot strategy for solo mode.
 // No randomness -> reproducible games, which makes debugging predictable.
 
-import { canPlay, cardPoints, COLORS } from './engine';
+import { canPlay, cardPoints, COLORS, isWildType, TARGETED } from './engine';
 
 function bestColor(state, botId) {
   const counts = { red: 0, yellow: 0, green: 0, blue: 0 };
@@ -17,20 +17,35 @@ function bestColor(state, botId) {
   return best;
 }
 
+// Opponent with the fewest cards (deterministic tie-break by turn order).
+function chooseTarget(state, botId) {
+  let best = null;
+  let bestN = Infinity;
+  for (const id of state.order) {
+    if (id === botId) continue;
+    const n = state.hands[id].length;
+    if (n < bestN) {
+      bestN = n;
+      best = id;
+    }
+  }
+  return best;
+}
+
 function playDecision(state, botId, playable) {
-  // deterministic order: keep wilds for last, shed high-value cards first, then by id
+  // deterministic order: keep wild-type for last, shed high-value cards first, then by id
   const sorted = playable.slice().sort((a, b) => {
-    const aw = a.value === 'wild' || a.value === 'wild4' ? 1 : 0;
-    const bw = b.value === 'wild' || b.value === 'wild4' ? 1 : 0;
+    const aw = isWildType(a) ? 1 : 0;
+    const bw = isWildType(b) ? 1 : 0;
     if (aw !== bw) return aw - bw;
     const pd = cardPoints(b) - cardPoints(a);
     if (pd !== 0) return pd;
     return a.id < b.id ? -1 : 1;
   });
   const card = sorted[0];
-  const isWild = card.value === 'wild' || card.value === 'wild4';
   const action = { type: 'play', playerId: botId, cardId: card.id };
-  if (isWild) action.color = bestColor(state, botId);
+  if (isWildType(card)) action.color = bestColor(state, botId);
+  if (TARGETED.includes(card.value)) action.target = chooseTarget(state, botId);
   return action;
 }
 

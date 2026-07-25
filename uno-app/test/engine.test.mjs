@@ -5,9 +5,11 @@ const ok = (cond, msg) => { if (!cond) { console.log('FAIL:', msg); fails++; } }
 
 // deck integrity
 const d = buildDeck();
-ok(d.length === 108, `deck length 108 got ${d.length}`);
+ok(d.length === 116, `deck length 116 got ${d.length}`);
 ok(d.filter(c=>c.value==='wild').length===4, 'four wilds');
 ok(d.filter(c=>c.value==='wild4').length===4, 'four wild4');
+ok(d.filter(c=>c.value==='swap').length===4, 'four swap');
+ok(d.filter(c=>c.value==='renew').length===4, 'four renew');
 ok(d.filter(c=>c.value==='0').length===4, 'four zeros');
 ok(d.filter(c=>c.value==='5').length===8, 'eight fives');
 
@@ -18,7 +20,7 @@ ok(g.hands.A.length===7 && g.hands.B.length===7 && g.hands.C.length===7, 'deal 7
 ok(g.discard.length===1, 'one discard start');
 ok(g.discard[0].color!==null, 'start card colored');
 const totalCards = g.drawPile.length + g.discard.length + 21;
-ok(totalCards===108, `cards conserved ${totalCards}`);
+ok(totalCards===116, `cards conserved ${totalCards}`);
 
 // turn enforcement
 let r = applyAction(g, {type:'play', playerId:'B', cardId:g.hands.B[0].id});
@@ -41,10 +43,13 @@ let hand = g.hands[curId];
 let playable = hand.find(c=>canPlay(c,g));
 if (playable) {
   const before = hand.length;
-  const isWild = playable.value==='wild'||playable.value==='wild4';
-  r = applyAction(g, {type:'play', playerId:curId, cardId:playable.id, color: isWild?'red':undefined});
+  const isWild = ['wild','wild4','swap','renew'].includes(playable.value);
+  const targeted = ['swap','renew'].includes(playable.value);
+  const target = targeted ? g.order.find(id=>id!==curId) : undefined;
+  const playedId = playable.id;
+  r = applyAction(g, {type:'play', playerId:curId, cardId:playedId, color: isWild?'red':undefined, target});
   ok(r.ok, 'valid play accepted: '+ (r.error||''));
-  ok(g.hands[curId].length===before-1, 'card removed from hand');
+  ok(topCard(g).id===playedId, 'played card is now on top of discard');
 } else { console.log('note: no immediately playable card this seed'); }
 
 // wild requires color
@@ -99,7 +104,43 @@ while (g.drawPile.length>0 && safety<200){
 // now force a draw that triggers reshuffle
 const p2=currentPlayerId(g);
 const total2 = g.drawPile.length+g.discard.length+Object.values(g.hands).reduce((a,h)=>a+h.length,0);
-ok(total2===108, `cards conserved after many draws ${total2}`);
+ok(total2===116, `cards conserved after many draws ${total2}`);
+
+// swap: exchange hands with a target
+g = createGame(players, 321);
+curId = currentPlayerId(g);
+const other = g.order.find(id=>id!==curId);
+g.hands[curId] = [{id:'sw',color:null,value:'swap'}, {id:'x1',color:'red',value:'3'}];
+g.hands[other] = [{id:'y1',color:'blue',value:'8'},{id:'y2',color:'green',value:'2'},{id:'y3',color:'red',value:'9'}];
+r = applyAction(g,{type:'play',playerId:curId,cardId:'sw',color:'red'}); // color but no target
+ok(!r.ok && /joueur/.test(r.error), 'swap needs target');
+r = applyAction(g,{type:'play',playerId:curId,cardId:'sw',color:'red',target:other});
+ok(r.ok, 'swap played: '+(r.error||''));
+ok(g.hands[curId].length===3 && g.hands[other].length===1, 'hands swapped');
+ok(g.lastEvent && g.lastEvent.type==='swap', 'swap event set');
+
+// renew: target discards hand and draws a fresh one of same size
+g = createGame(players, 654);
+curId = currentPlayerId(g);
+const victim = g.order.find(id=>id!==curId);
+g.hands[curId] = [{id:'rn',color:null,value:'renew'}, {id:'k1',color:'red',value:'3'}];
+const beforeCount = g.hands[victim].length;
+const beforeIds = new Set(g.hands[victim].map(c=>c.id));
+const totalBefore = g.drawPile.length + g.discard.length + Object.values(g.hands).reduce((a,h)=>a+h.length,0);
+r = applyAction(g,{type:'play',playerId:curId,cardId:'rn',color:'blue',target:victim});
+ok(r.ok, 'renew played: '+(r.error||''));
+ok(g.hands[victim].length===beforeCount, 'renew keeps hand size');
+const sameCard = g.hands[victim].some(c=>beforeIds.has(c.id));
+ok(!sameCard, 'renew gives brand new cards');
+const totalAfter = g.drawPile.length + g.discard.length + Object.values(g.hands).reduce((a,h)=>a+h.length,0);
+ok(totalAfter===totalBefore, `renew conserves cards ${totalAfter} vs ${totalBefore}`);
+
+// eventSeq increments on actions
+g = createGame(players, 222);
+const seq0 = g.eventSeq;
+curId = currentPlayerId(g);
+applyAction(g,{type:'draw',playerId:curId});
+ok(g.eventSeq===seq0+1, 'eventSeq increments');
 
 console.log(fails===0 ? 'ALL TESTS PASSED ✅' : `${fails} test(s) failed ❌`);
 process.exit(fails===0?0:1);

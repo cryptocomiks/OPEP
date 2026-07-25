@@ -27,6 +27,7 @@ export const theme = {
 export const GRAD = {
   home: ['#20265c', '#0b0e22'],
   table: ['#161b3c', '#0a0d1f'],
+  felt: ['#127a3d', '#0a4a24', '#062f16'],
 };
 
 export const LABELS = {
@@ -37,4 +38,6 @@ export const LABELS = {
   draw2: '+2',
   wild: '★',
   wild4: '+4',
+  swap: '🔄',
+  renew: '♻️',
 };

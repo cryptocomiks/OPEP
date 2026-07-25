@@ -3,22 +3,46 @@ import { Animated, Easing, Dimensions, StyleSheet, View, Text } from 'react-nati
 import { CardBack } from './Card';
 
 const { width: W, height: H } = Dimensions.get('window');
-
-// Deck sits mid-table; the local hand is near the bottom.
 const DECK = { x: W * 0.5 - 38, y: H * 0.4 };
 const HAND = { x: W * 0.5 - 38, y: H * 0.8 };
 
 // Renders one transient effect then calls onDone. Re-mounted per fx via `key`.
 export default function FxLayer({ fx, onDone }) {
   if (!fx) return null;
-  if (fx.type === 'draw') return <FlyingCards n={Math.min(fx.n || 1, 4)} from={DECK} to={HAND} onDone={onDone} />;
-  if (fx.type === 'plus') return <PlusBadge value={fx.value} toMe={fx.toMe} onDone={onDone} />;
-  return null;
+  switch (fx.type) {
+    case 'draw':
+      return <FlyingCards n={Math.min(fx.n || 1, 4)} from={DECK} to={HAND} onDone={onDone} />;
+    case 'plus':
+      return (
+        <Badge
+          label={fx.value === 'wild4' ? '+4' : '+2'}
+          sub={fx.toMe ? 'Tu pioches !' : 'Cartes !'}
+          bg={fx.value === 'wild4' ? '#141726' : '#E4342B'}
+          flyN={fx.toMe ? (fx.value === 'wild4' ? 4 : 2) : 0}
+          onDone={onDone}
+        />
+      );
+    case 'lock':
+      return <Badge label="🔒" sub={fx.toMe ? 'Tu es bloqué !' : 'Bloqué !'} bg="#232a4d" onDone={onDone} />;
+    case 'swap':
+      return <Badge label="🔄" sub={fx.toMe ? 'On prend ta main !' : 'Échange de mains'} bg="#7a3fb0" crossing onDone={onDone} />;
+    case 'renew':
+      return (
+        <Badge
+          label="♻️"
+          sub={fx.toMe ? 'Main toute neuve !' : 'Main renouvelée'}
+          bg="#1f7a4d"
+          flyN={fx.toMe ? Math.min(fx.n || 3, 4) : 0}
+          onDone={onDone}
+        />
+      );
+    default:
+      return null;
+  }
 }
 
 function FlyingCards({ n, from, to, onDone }) {
   const items = useRef(Array.from({ length: n }, () => new Animated.Value(0))).current;
-
   useEffect(() => {
     const anims = items.map((v, i) =>
       Animated.timing(v, { toValue: 1, duration: 520, delay: i * 110, easing: Easing.out(Easing.cubic), useNativeDriver: true })
@@ -50,24 +74,23 @@ function FlyingCards({ n, from, to, onDone }) {
   );
 }
 
-function PlusBadge({ value, toMe, onDone }) {
+// Generic centered badge with pop + shake; optional flying cards / crossing cards.
+function Badge({ label, sub, bg, flyN = 0, crossing, onDone }) {
   const pop = useRef(new Animated.Value(0)).current;
   const shake = useRef(new Animated.Value(0)).current;
-  const label = value === 'wild4' ? '+4' : '+2';
-  const n = value === 'wild4' ? 4 : 2;
+  const cross = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.sequence([
       Animated.spring(pop, { toValue: 1, friction: 5, tension: 120, useNativeDriver: true }),
-      Animated.sequence([
-        ...[12, -12, 8, -8, 4, 0].map((to) =>
-          Animated.timing(shake, { toValue: to, duration: 45, useNativeDriver: true })
-        ),
+      Animated.parallel([
+        Animated.sequence([12, -12, 8, -8, 4, 0].map((to) => Animated.timing(shake, { toValue: to, duration: 45, useNativeDriver: true }))),
+        Animated.timing(cross, { toValue: 1, duration: 500, useNativeDriver: true }),
       ]),
-      Animated.delay(500),
+      Animated.delay(520),
       Animated.timing(pop, { toValue: 0, duration: 260, useNativeDriver: true }),
     ]).start(() => onDone && onDone());
-    const t = setTimeout(() => onDone && onDone(), 2200);
+    const t = setTimeout(() => onDone && onDone(), 2400);
     return () => clearTimeout(t);
   }, []);
 
@@ -75,13 +98,23 @@ function PlusBadge({ value, toMe, onDone }) {
 
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.centerFill]}>
+      {crossing ? (
+        <View style={styles.crossWrap}>
+          <Animated.View style={{ transform: [{ translateX: cross.interpolate({ inputRange: [0, 1], outputRange: [40, -40] }) }] }}>
+            <CardBack small />
+          </Animated.View>
+          <Animated.View style={{ transform: [{ translateX: cross.interpolate({ inputRange: [0, 1], outputRange: [-40, 40] }) }] }}>
+            <CardBack small />
+          </Animated.View>
+        </View>
+      ) : null}
       <Animated.View style={{ opacity: pop, transform: [{ scale }, { translateX: shake }] }}>
-        <View style={[styles.badge, value === 'wild4' ? styles.badgeWild : styles.badgeRed]}>
+        <View style={[styles.badge, { backgroundColor: bg }]}>
           <Text style={styles.badgeText}>{label}</Text>
-          <Text style={styles.badgeSub}>{toMe ? 'Tu pioches !' : 'Cartes !'}</Text>
+          <Text style={styles.badgeSub}>{sub}</Text>
         </View>
       </Animated.View>
-      {toMe ? <FlyingCards n={n} from={DECK} to={HAND} onDone={() => {}} /> : null}
+      {flyN > 0 ? <FlyingCards n={flyN} from={DECK} to={HAND} onDone={() => {}} /> : null}
     </View>
   );
 }
@@ -89,9 +122,10 @@ function PlusBadge({ value, toMe, onDone }) {
 const styles = StyleSheet.create({
   flyer: { position: 'absolute' },
   centerFill: { alignItems: 'center', justifyContent: 'center' },
+  crossWrap: { position: 'absolute', flexDirection: 'row', gap: 6 },
   badge: {
-    paddingVertical: 22,
-    paddingHorizontal: 40,
+    paddingVertical: 20,
+    paddingHorizontal: 38,
     borderRadius: 26,
     borderWidth: 5,
     borderColor: '#fff',
@@ -101,8 +135,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 12,
   },
-  badgeRed: { backgroundColor: '#E4342B' },
-  badgeWild: { backgroundColor: '#141726' },
-  badgeText: { color: '#F5C518', fontSize: 64, fontWeight: '900', fontStyle: 'italic' },
+  badgeText: { color: '#F5C518', fontSize: 60, fontWeight: '900', fontStyle: 'italic' },
   badgeSub: { color: '#fff', fontSize: 16, fontWeight: '800', marginTop: 2 },
 });
