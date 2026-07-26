@@ -2,7 +2,7 @@ name: Deploy Sneakerie to Pages
 
 on:
   push:
-    branches: [main, claude/shoe-closet-app-4xsgtc]
+    branches: [main, claude/shoe-closet-app-4xsgtc, claude/lanation-apple-redesign-8y8lmf]
   workflow_dispatch:
 
 permissions:
@@ -32,11 +32,12 @@ jobs:
       # ⏸️ SNEAKIII EN PAUSE : on publie le dashboard OPEP à la racine et une
       # page « en pause » à /armoire/ (l'app n'est PAS publiée). La source de
       # l'app reste dans armoire/ ; pour reprendre, republier armoire/index.html.
-      - name: Build publish dir (OPEP live · SNEAKIII paused)
+      - name: Build publish dir (OPEP live · La Nation live · SNEAKIII paused)
         run: |
-          rm -rf _site && mkdir -p _site/armoire
+          rm -rf _site && mkdir -p _site/armoire _site/lanation
           cp index.html _site/index.html
           cp .github/paused/index.html _site/armoire/index.html
+          cp lanation/index.html _site/lanation/index.html
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
