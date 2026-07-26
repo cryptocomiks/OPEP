@@ -32,12 +32,26 @@ jobs:
       # ⏸️ SNEAKIII EN PAUSE : on publie le dashboard OPEP à la racine et une
       # page « en pause » à /armoire/ (l'app n'est PAS publiée). La source de
       # l'app reste dans armoire/ ; pour reprendre, republier armoire/index.html.
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Build publish dir (OPEP live · La Nation live · SNEAKIII paused)
         run: |
           rm -rf _site && mkdir -p _site/armoire _site/lanation
           cp index.html _site/index.html
           cp .github/paused/index.html _site/armoire/index.html
           cp lanation/index.html _site/lanation/index.html
+          if [ -d lanation/assets ]; then cp -r lanation/assets _site/lanation/assets; fi
+
+      # Les vrais articles de lanation.dj sont figés ici : le runner a un accès
+      # Internet complet, contrairement au navigateur du visiteur qui peut se
+      # heurter au CORS. La page lit ce data.json (même origine) puis tente un
+      # rafraîchissement live. Ne bloque jamais le déploiement.
+      - name: Snapshot des articles La Nation
+        continue-on-error: true
+        run: node tools/build-snapshot.mjs _site/lanation/data.json
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
